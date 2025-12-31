@@ -1,5 +1,6 @@
 import { LayoutDashboard, TrendingUp, MessageSquare, Search, Star } from 'lucide-react';
 import type { PageType } from '../App';
+import '../styles/Sidebar.css';
 import laneigeLogo from 'figma:asset/38cc32cf41940ff9f37635589cb8007dcc51c7ce.png';
 
 interface SidebarProps {
@@ -17,37 +18,37 @@ const menuItems = [
 
 export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
   return (
-    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b border-gray-200">
-        <img src={laneigeLogo} alt="LANEIGE Insight Pocket" className="w-full" />
+    <aside className="sidebar">
+      <div className="sidebar__header">
+        <img
+          src={laneigeLogo}
+          alt="LANEIGE Insight Pocket"
+          className="sidebar__logo"
+        />
       </div>
-      
-      <nav className="flex-1 p-4">
+
+      <nav className="sidebar__nav">
         {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentPage === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => onPageChange(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-colors ${
-                isActive
-                  ? 'bg-[#6691ff] text-white'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`sidebar__item ${isActive ? 'is-active' : ''}`}
             >
-              <Icon className="w-5 h-5" />
-              <span>{item.label}</span>
+              <Icon className="sidebar__icon" />
+              <span className="sidebar__label">{item.label}</span>
             </button>
           );
         })}
       </nav>
-      
-      <div className="p-4 border-t border-gray-200">
-        <p className="text-xs text-gray-500">Last updated</p>
-        <p className="text-sm text-gray-700">December 22, 2024</p>
-      </div>
-    </div>
+
+      <footer className="sidebar__footer">
+        <p className="sidebar__updated-label">Last updated</p>
+        <p className="sidebar__updated-date">December 22, 2024</p>
+      </footer>
+    </aside>
   );
 }
