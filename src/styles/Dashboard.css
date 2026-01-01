@@ -59,6 +59,10 @@
   margin-bottom: 1rem;
 }
 
+.rank_badge {
+  background: #6691FF;
+}
+
 /* Stat Card */
 .stat-card {
   display: flex;

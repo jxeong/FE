@@ -1,4 +1,4 @@
-// components/TableCard.tsx
+// components/DashTableCard.tsx
 import { AddToCartButton } from './AddToCartButton';
 
 interface TableCardProps {
@@ -22,24 +22,7 @@ export function TableCard({
     <section className="table-card">
       <div className="table-card__header">
         <h2 className="table-card__title">{title}</h2>
-
-        <div className="table-card__actions">
-          <AddToCartButton
-            onAdd={() =>
-              addToCart({
-                type: 'table',
-                title,
-                data: null,
-                page: 'dashboard',
-                uniqueKey,
-              })
-            }
-            onRemove={() => removeByUniqueKey(uniqueKey)}
-            isInCart={isInCart(uniqueKey)}
-          />
-        </div>
       </div>
-
       {children}
     </section>
   );

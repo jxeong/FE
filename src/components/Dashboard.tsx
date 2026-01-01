@@ -21,10 +21,10 @@ import { AddToCartButton } from './AddToCartButton';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import type { InsightItem } from '../App';
 import '../styles/Dashboard.css';
-import '../styles/table.css';
+import '../styles/Dashtable.css';
 import insightIcon from '../assets/sparkler.svg';
-import { BestSellerTop5 } from './BestSellerTop5';
-import { ProductDetailTable } from './ProductDetailTable';
+import { BestSellerTop5 } from './DashBestSellerTop5';
+import { ProductDetailTable } from './DashProductDetailTable';
 import { useState } from 'react';
 
 interface DashboardProps {

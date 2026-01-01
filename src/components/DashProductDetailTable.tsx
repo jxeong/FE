@@ -1,5 +1,5 @@
-// components/ProductDetailTable.tsx
-import { TableCard } from './TableCard';
+// components/DashProductDetailTable.tsx
+import { TableCard } from './DashTableCard';
 
 type ProductItem = {
   rank: number;

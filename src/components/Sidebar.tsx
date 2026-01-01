@@ -1,7 +1,7 @@
 import { LayoutDashboard, TrendingUp, MessageSquare, Search, Star } from 'lucide-react';
 import type { PageType } from '../App';
 import '../styles/Sidebar.css';
-import laneigeLogo from 'figma:asset/38cc32cf41940ff9f37635589cb8007dcc51c7ce.png';
+import laneigeLogo from '../assets/laneigeLogo.png';
 
 interface SidebarProps {
   currentPage: PageType;

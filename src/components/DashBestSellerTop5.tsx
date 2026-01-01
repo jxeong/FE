@@ -1,5 +1,5 @@
-// components/BestSellerTop5.tsx
-import { TableCard } from './TableCard';
+// components/DashBestSellerTop5.tsx
+import { TableCard } from './DashTableCard';
 import { Star } from 'lucide-react';
 
 const data = [
