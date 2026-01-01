@@ -1,0 +1,258 @@
+.ai-insights {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(2.66deg, #ffffff 1.29%, #f1f5ff 112.82%);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ===== Chat ===== */
+.ai-chat {
+  position: relative;
+  padding-top: 130px;
+  flex: 1;
+  padding: 80px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ai-insights::before {
+  content: "";
+  position: absolute;
+
+  width: 1220px;
+  height: 1220px;
+
+  left: -300px;
+  top: 93px;
+
+  background: radial-gradient(
+    circle,
+    rgba(102, 145, 255, 0.25),
+    rgba(102, 145, 255, 0) 70%
+  );
+
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ai-insights::after {
+  content: "";
+  position: absolute;
+
+  width: 660px;
+  height: 660px;
+
+  top: -157px;
+  right: -140px;
+
+  background: radial-gradient(
+    circle,
+    rgba(139, 171, 255, 0.35),
+    rgba(139, 171, 255, 0) 70%
+  );
+
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ai-message {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  scroll-margin-bottom: 72px;
+  position: relative;
+  z-index: 1;
+}
+
+.ai-message--user {
+  flex-direction: row-reverse;
+}
+
+.ai-message__avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: #6691ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-message--user .ai-message__avatar {
+  background: #ffffff;
+  color: #383838;
+}
+
+.ai-message__bubble {
+  padding: 14px 16px;
+  font-weight: 500;
+}
+.ai-message--assistant .ai-message__bubble {
+  max-width: 100%;
+  background: white;
+  border: 1px solid #c4c4c4;
+  border-top-right-radius: 30px;
+  border-bottom-right-radius: 30px;
+  border-bottom-left-radius: 30px;
+  border-width: 1px;
+  
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.ai-message--user .ai-message__bubble {
+  background: #6691ff;
+  color: white;
+  border: 1px solid #c4c4c4;
+  border-top-left-radius: 30px;
+  border-bottom-right-radius: 30px;
+  border-bottom-left-radius: 30px;
+  border-width: 1px;
+}
+
+.ai-message__bubble time {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.ai-message--assistant .ai-message__bubble time {
+  color: #9c9c9c;
+}
+
+.ai-message--user .ai-message__bubble time {
+  color: white;
+  text-align: right;
+}
+
+.ai-message__bubble--typing {
+  font-size: 18px;
+}
+
+/* ===== Tags ===== */
+.ai-message__tags {
+  margin-bottom: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.ai-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: 999px;
+  background: #e8efff;
+  color: #6691ff;
+}
+
+/* ===== Suggestions ===== */
+.ai-suggestions {
+  padding: 16px 80px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  background-color: transparent;
+  z-index: 5;
+}
+
+.ai-suggestions button {
+  width: fit-content;
+  padding: 10px 15px;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  color: #7a7a7a;
+  font-weight: 500;
+  background: white;
+  transition: background 0.15s ease, border-color 0.15s ease;
+  z-index: 5;
+}
+
+.ai-suggestions button:hover {
+  border: 1px solid #8babff;
+  background: #f1f5ff;
+  color: #6691ff;
+}
+
+/* ===== Input ===== */
+.ai-input {
+  margin: 0px 80px 30px 80px;
+  padding: 3px 10px;
+  display: flex;
+  gap: 12px;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  background: white;
+  align-items: center;
+  z-index: 5;
+}
+
+.ai-input input {
+  flex: 1;
+  color: #7a7a7a;
+}
+
+.ai-input input:focus,
+.ai-input input:focus-visible {
+  outline: none;
+}
+
+.ai-input__btn {
+  width: 40px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #6691ff;
+}
+
+.ai-input__send {
+  width: 40px;
+  height: 40px;
+  background: #6691ff;
+  color: white;
+  padding: 10px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Modal ===== */
+.ai-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.ai-modal__content {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  width: 400px;
+}
+
+.ai-data-item {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-data-item.is-selected {
+  border-color: #6691ff;
+  background: #eff6ff;
+}
