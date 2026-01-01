@@ -1,4 +1,4 @@
-// components/TableCard.tsx
+// components/DashTableCard.tsx
 import { AddToCartButton } from './AddToCartButton';
 
 interface TableCardProps {
