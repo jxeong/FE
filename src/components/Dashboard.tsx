@@ -26,9 +26,14 @@ import insightIcon from "../assets/sparkler.svg";
 import { BestSellerTop5 } from "./DashBestSellerTop5";
 import { ProductDetailTable } from "./DashProductDetailTable";
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../config/api";
 
 // API
-import { fetchTop5Bestsellers, fetchTop1BestSeller, fetchRisingProduct } from "../api/dashboard";
+import {
+  fetchTop5Bestsellers,
+  fetchTop1BestSeller,
+  fetchRisingProduct,
+} from "../api/dashboard";
 import type {
   BestSellerItemRaw,
   Top1BestSellerItemRaw,
@@ -123,6 +128,9 @@ export function Dashboard({
 
   const [risingProduct, setRisingProduct] = useState<any>(null);
 
+  const [todayInsight, setTodayInsight] = useState<string>("");
+  const [insightLoading, setInsightLoading] = useState(true);
+
   // [1] 베스트셀러 top5 데이터 로드
   useEffect(() => {
     async function load() {
@@ -182,6 +190,30 @@ export function Dashboard({
     loadRising();
   }, []);
 
+  useEffect(() => {
+    const fetchTodayInsight = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/reports/today/insight`
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch today insight");
+        }
+
+        const data = await res.json();
+        setTodayInsight(data.insight);
+      } catch (e) {
+        console.error("오늘의 인사이트 로드 실패", e);
+        setTodayInsight("오늘의 인사이트를 불러오지 못했어요.");
+      } finally {
+        setInsightLoading(false);
+      }
+    };
+
+    fetchTodayInsight();
+  }, []);
+
   return (
     <div className="dashboard">
       {/* Today Insight */}
@@ -196,7 +228,7 @@ export function Dashboard({
         <div>
           <h3 className="dashboard__insight-label">오늘의 인사이트</h3>
           <p className="dashboard__insight-text">
-            Lip Sleeping Mask의 순위가 어제에 비해 2등 올랐어요!
+            {insightLoading ? "오늘의 인사이트를 분석 중이에요…" : todayInsight}
           </p>
         </div>
       </section>
