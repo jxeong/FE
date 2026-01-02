@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Bot, User, Sparkles, Plus, FileText } from "lucide-react";
+import { Send, Bot, Plus, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import "../styles/AIInsights.css";
 import type { InsightItem } from "../App";
@@ -7,6 +7,8 @@ import {
   fetchTop1BestSellerAIContext,
   fetchRisingProductItemAIContext,
 } from "../api/dashboard";
+
+/* ================= Types ================= */
 
 interface Message {
   id: string;
@@ -16,21 +18,9 @@ interface Message {
   attachedData?: string[];
 }
 
-/** ===== API payload types ===== */
 type ChatMessageForAPI = {
-  role: "user" | "assistant";
+  role: "system" | "user" | "assistant";
   content: string;
-  attachedData?: string[];
-};
-
-type ChatRequest = {
-  messages: ChatMessageForAPI[];
-  selectedDataIds?: string[];
-  selectedDataTitles?: string[];
-};
-
-type ChatResponse = {
-  answer: string;
 };
 
 type AISelectableData = {
@@ -38,11 +28,11 @@ type AISelectableData = {
   title: string;
   page: string;
   type: "stat" | "chart" | "table";
-
   fetchContext: () => Promise<any>;
 };
 
-/* ===== 임시 더미 ===== */
+/* ================= Static Data ================= */
+
 const suggestedQuestions = [
   "이번 달 매출 트렌드를 분석해주세요.",
   "Water Sleeping Mask의 아마존 순위 변동을 알려주세요.",
@@ -56,45 +46,36 @@ const allAvailableData: AISelectableData[] = [
     title: "지난 달 총 판매량",
     page: "dashboard",
     type: "stat",
-    fetchContext: "[더미데이터] 지난 달 라네즈 제품 총 판매량: 21,400개",
+    fetchContext: async () =>
+      "[더미데이터] 지난 달 라네즈 제품 총 판매량: 21,400개",
   },
   {
     id: "dashboard-stat-revenue",
     title: "지난 달 매출액",
     page: "dashboard",
     type: "stat",
-    fetchContext: "[더미데이터] 지난 달 라네즈 제품 총 매출액: $145,242",
+    fetchContext: async () =>
+      "[더미데이터] 지난 달 라네즈 제품 총 매출액: $145,242",
   },
   {
     id: "dashboard-product-of-month",
     title: "이달의 제품",
     page: "dashboard",
     type: "stat",
-    fetchContext: async () => {
-      const ctx = await fetchTop1BestSellerAIContext("2026-01");
-      return ctx;
-    },
+    fetchContext: async () => await fetchTop1BestSellerAIContext("2026-01"),
   },
   {
     id: "dashboard-rising-product",
     title: "급상승한 제품",
     page: "dashboard",
     type: "stat",
-    fetchContext: async () => {
-      const ctx = await fetchRisingProductItemAIContext("2026-01");
-      return ctx;
-    },
+    fetchContext: async () => await fetchRisingProductItemAIContext("2026-01"),
   },
 ];
 
-/* ============================================ */
+/* ================= Helpers ================= */
 
-interface AIInsightsProps {
-  cartItems: InsightItem[];
-}
-
-/** ===== API call helper ===== */
-async function callChatAPI(payload: any): Promise<string> {
+async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
   const res = await fetch("https://boradora.store/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -103,30 +84,64 @@ async function callChatAPI(payload: any): Promise<string> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`API Error ${res.status}: ${text || res.statusText}`);
+    throw new Error(text || "Chat API Error");
   }
 
   const data = await res.json();
-  return data.answer;
+  return data.answer as string;
 }
 
-async function buildContextValues(
+async function buildContextPrefixText(selectedIds: string[]): Promise<string> {
+  if (selectedIds.length === 0) return "";
+
+  const lines: string[] = [];
+  lines.push("[선택한 데이터 컨텍스트]");
+  lines.push("아래 데이터를 참고해서 답변하세요.\n");
+
+  for (const id of selectedIds) {
+    const item = allAvailableData.find((d) => d.id === id);
+    if (!item) continue;
+
+    const value = await item.fetchContext();
+
+    lines.push(`■ ${item.title}`);
+    lines.push(
+      typeof value === "string" ? value : JSON.stringify(value, null, 2)
+    );
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+async function buildContextSystemMessage(
   selectedIds: string[]
-): Promise<Record<string, any>> {
-  const entries = await Promise.all(
-    selectedIds.map(async (id) => {
-      const item = allAvailableData.find((d) => d.id === id);
-      if (!item) return null;
+): Promise<string | null> {
+  if (selectedIds.length === 0) return null;
 
-      const data = await item.fetchContext();
-      return [id, data] as const;
-    })
-  );
+  const lines: string[] = [];
+  lines.push("다음은 사용자가 선택한 데이터 컨텍스트입니다.");
+  lines.push("이 정보를 참고해서 질문에 답하세요.\n");
 
-  return Object.fromEntries(entries.filter(Boolean) as Array<[string, any]>);
+  for (const id of selectedIds) {
+    const item = allAvailableData.find((d) => d.id === id);
+    if (!item) continue;
+
+    const value = await item.fetchContext();
+
+    lines.push(`■ ${item.title}`);
+    lines.push(
+      typeof value === "string" ? value : JSON.stringify(value, null, 2)
+    );
+    lines.push("");
+  }
+
+  return lines.join("\n");
 }
 
-export function AIInsights({ cartItems }: AIInsightsProps) {
+/* ================= Component ================= */
+
+export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "init",
@@ -141,34 +156,24 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const endRef = useRef<HTMLDivElement>(null);
 
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    const chat = document.querySelector(".ai-chat");
-    if (chat) {
-      chat.scrollTop = 0;
-    }
-  }, []);
-
-  useEffect(() => {
-    const lastMessage = messages[messages.length - 1];
-    if (!lastMessage) return;
-
-    const el = messageRefs.current[lastMessage.id];
-    if (!el) return;
-
-    el.scrollIntoView({
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    messageRefs.current[last.id]?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
   }, [messages]);
 
+  /* ================= Send ================= */
+
   const handleSend = async (text = input) => {
     if (!text.trim() && selectedData.length === 0) return;
 
-    // 선택된 데이터: id -> title
+    // 선택된 데이터: id -> title (UI 태그용)
     const attachedDataTitles = selectedData.map((id) => {
       const item = allAvailableData.find((d) => d.id === id);
       return item?.title || id;
@@ -187,34 +192,40 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
     setIsTyping(true);
 
     try {
-      // 최신 히스토리(기존 messages + 방금 보낸 userMessage)를 API로 보냄
-      const historyForAPI: ChatMessageForAPI[] = [...messages, userMessage].map(
-        (m) => ({
+      // ✅ 컨텍스트를 텍스트로 만들고, "user content" 앞에 붙임
+      const ctxPrefix = await buildContextPrefixText(selectedData);
+
+      const userContentForAPI =
+        ctxPrefix.trim().length > 0
+          ? `${ctxPrefix}\n\n[질문]\n${userMessage.content}`
+          : userMessage.content;
+
+      // ✅ 백엔드가 허용하는 role만 사용: user / assistant
+      const historyForAPI: ChatMessageForAPI[] = [
+        ...messages.map((m) => ({
           role: m.role,
           content: m.content,
           attachedData: m.attachedData,
-        })
-      );
-
-      // 선택된 데이터에 대해 API 호출
-      const contextValues =
-        selectedData.length > 0
-          ? await buildContextValues(selectedData)
-          : undefined;
+        })),
+        {
+          role: "user",
+          content: userContentForAPI,
+          attachedData: userMessage.attachedData,
+        },
+      ];
 
       // ===== DEBUG LOG =====
       console.group("AI Chat Payload Debug");
       console.log("messages:", historyForAPI);
       console.log("selectedDataIds:", selectedData);
       console.log("selectedDataTitles:", attachedDataTitles);
-      console.log("contextValues:", contextValues);
+      console.log("ctxPrefix:", ctxPrefix);
       console.groupEnd();
 
       const reply = await callChatAPI({
         messages: historyForAPI,
         selectedDataIds: selectedData,
         selectedDataTitles: attachedDataTitles,
-        contextValues,
       });
 
       const aiResponse: Message = {
@@ -242,6 +253,8 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
     }
   };
 
+  /* ================= UI Helpers ================= */
+
   const toggleData = (id: string) => {
     setSelectedData((prev) =>
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
@@ -249,13 +262,14 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
   };
 
   const cartDataIds = cartItems.map((item) => item.uniqueKey);
-
   const pocketData = allAvailableData.filter((d) => cartDataIds.includes(d.id));
   const otherData = allAvailableData.filter((d) => !cartDataIds.includes(d.id));
 
   const selectedDataItems = selectedData
     .map((id) => allAvailableData.find((d) => d.id === id))
     .filter(Boolean);
+
+  /* ================= Render ================= */
 
   return (
     <div className="ai-insights">
@@ -264,9 +278,7 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
         {messages.map((msg) => (
           <div
             key={msg.id}
-            ref={(el) => {
-              messageRefs.current[msg.id] = el;
-            }}
+            ref={(el) => (messageRefs.current[msg.id] = el)}
             className={`ai-message ai-message--${msg.role}`}
           >
             {msg.role === "assistant" && (
@@ -310,8 +322,6 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
             </div>
           </div>
         )}
-
-        <div ref={endRef} />
       </main>
 
       {/* ===== Suggested ===== */}
@@ -394,76 +404,61 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
               <h2>분석할 데이터 선택</h2>
 
               <div className="ai-data-list">
-                {/* ===== Pocket 섹션 ===== */}
                 <h3 className="ai-data-section-title">Pocket에 담은 데이터</h3>
 
                 {pocketData.length === 0 ? (
                   <div className="ai-data-empty">
-                    아직 Pocket에 담긴 데이터가 없습니다. + 버튼을 눌러 데이터를
-                    담아보세요!
+                    아직 Pocket에 담긴 데이터가 없습니다.
                   </div>
                 ) : (
-                  pocketData.map((d) => {
-                    const isSelected = selectedData.includes(d.id);
-
-                    return (
-                      <button
-                        key={d.id}
-                        type="button"
-                        className={`ai-data-card ${
-                          isSelected ? "is-selected" : ""
-                        }`}
-                        onClick={() => toggleData(d.id)}
-                      >
-                        <div className="ai-data-card__main">
-                          <span className="ai-data-card__title">{d.title}</span>
-
-                          <div className="ai-data-card__tags">
-                            <span className="ai-tag">{d.page}</span>
-                            <span className="ai-tag">{d.type}</span>
-                          </div>
-                        </div>
-
-                        {isSelected && (
-                          <div className="ai-data-card__check">✓</div>
-                        )}
-                      </button>
-                    );
-                  })
-                )}
-
-                {/* ===== 사용 가능한 모든 데이터 ===== */}
-                <h3 className="ai-data-section-title">
-                  사용 가능한 모든 데이터
-                </h3>
-
-                {otherData.map((d) => {
-                  const isSelected = selectedData.includes(d.id);
-
-                  return (
+                  pocketData.map((d) => (
                     <button
                       key={d.id}
                       type="button"
                       className={`ai-data-card ${
-                        isSelected ? "is-selected" : ""
+                        selectedData.includes(d.id) ? "is-selected" : ""
                       }`}
                       onClick={() => toggleData(d.id)}
                     >
                       <div className="ai-data-card__main">
                         <span className="ai-data-card__title">{d.title}</span>
-
                         <div className="ai-data-card__tags">
                           <span className="ai-tag">{d.page}</span>
                           <span className="ai-tag">{d.type}</span>
                         </div>
                       </div>
-
-                      {isSelected && (
+                      {selectedData.includes(d.id) && (
                         <div className="ai-data-card__check">✓</div>
                       )}
                     </button>
-                  );
-                })}
+                  ))
+                )}
+
+                <h3 className="ai-data-section-title">
+                  사용 가능한 모든 데이터
+                </h3>
+
+                {otherData.map((d) => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    className={`ai-data-card ${
+                      selectedData.includes(d.id) ? "is-selected" : ""
+                    }`}
+                    onClick={() => toggleData(d.id)}
+                  >
+                    <div className="ai-data-card__main">
+                      <span className="ai-data-card__title">{d.title}</span>
+                      <div className="ai-data-card__tags">
+                        <span className="ai-tag">{d.page}</span>
+                        <span className="ai-tag">{d.type}</span>
+                      </div>
+                    </div>
+                    {selectedData.includes(d.id) && (
+                      <div className="ai-data-card__check">✓</div>
+                    )}
+                  </button>
+                ))}
               </div>
 
               <div className="ai-modal__footer">
@@ -473,7 +468,6 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
                 >
                   취소
                 </button>
-
                 <button
                   className="ai-modal__confirm"
                   onClick={() => setShowModal(false)}
