@@ -101,6 +101,16 @@
 /* =====================
    표 디자인
 ===================== */
+.ranking-table-wrapper {
+  max-height: 420px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.ranking-table-wrapper::-webkit-scrollbar {
+  width: 6px;
+}
+
 .ranking-table {
   width: 100%;
   border-collapse: separate;
@@ -113,11 +123,14 @@
 
 /* th 공통 */
 .ranking-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   padding: 20px 30px;
   font-size: 16px;
   font-weight: 500;
   color: #6691FF;
-  
+  background: #EEF3FF;
 }
 
 /* 좌측/우측 모서리만 둥글게 */
@@ -293,13 +306,15 @@
 }
 
 /* 카테고리 선택 */
-.ranking-chart__category {
+.ranking-chart__category,
+.ranking-chart__period{
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
 }
 
-.ranking-chart__category-btn {
+.ranking-chart__category-btn,
+.ranking-chart__period-btn {
   padding: 5px 14px;
   font-size: 16px;
   font-weight: 400;
@@ -310,7 +325,8 @@
   transition: all 0.2s ease;
 }
 
-.ranking-chart__category-btn.is-active {
+.ranking-chart__category-btn.is-active,
+.ranking-chart__period-btn.is-active {
   background: #6691ff;
   border-color: #6691ff;
   color: #fff;
@@ -406,7 +422,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 999;
+  z-index: 5;
 }
 
 .scroll-btn--left {
