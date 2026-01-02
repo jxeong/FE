@@ -69,7 +69,7 @@ interface AIInsightsProps {
 
 /** ===== API call helper ===== */
 async function callChatAPI(payload: any): Promise<string> {
-  const res = await fetch("http://boradora.store/api/chat", {
+  const res = await fetch("https://boradora.store/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
