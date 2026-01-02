@@ -3,6 +3,10 @@ import { Send, Bot, User, Sparkles, Plus, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import "../styles/AIInsights.css";
 import type { InsightItem } from "../App";
+import {
+  fetchTop1BestSellerAIContext,
+  fetchRisingProductItemAIContext,
+} from "../api/dashboard";
 
 interface Message {
   id: string;
@@ -29,6 +33,15 @@ type ChatResponse = {
   answer: string;
 };
 
+type AISelectableData = {
+  id: string;
+  title: string;
+  page: string;
+  type: "stat" | "chart" | "table";
+
+  fetchContext: () => Promise<any>;
+};
+
 /* ===== 임시 더미 ===== */
 const suggestedQuestions = [
   "이번 달 매출 트렌드를 분석해주세요.",
@@ -37,30 +50,43 @@ const suggestedQuestions = [
   "다음 분기 전략을 제안해 주세요.",
 ];
 
-const allAvailableData = [
-  { id: 'dashboard-stat-sales', title: '총 판매량', page: 'dashboard', type: 'stat' },
-  { id: 'dashboard-stat-revenue', title: '매출액', page: 'dashboard', type: 'stat' },
-  { id: 'dashboard-product-of-month', title: '이달의 제품', page: 'dashboard', type: 'stat' },
-  { id: 'dashboard-rising-product', title: '급상승한 제품', page: 'dashboard', type: 'stat' },
-  { id: 'dashboard-chart-monthly-sales', title: '지난 달 판매 추이', page: 'dashboard', type: 'chart' },
-  { id: 'dashboard-table-top5', title: '베스트 셀러 TOP 5', page: 'dashboard', type: 'table' },
-  { id: 'dashboard-table-details', title: '제품별 상세 현황', page: 'dashboard', type: 'table' },
-  { id: 'ranking-table-amazon-current', title: '아마존 현재 순위', page: 'ranking', type: 'table' },
-  { id: 'review-sentiment-chart', title: '감정 분석 분포', page: 'review', type: 'chart' },
-  { id: 'review-reputation-score', title: '평판 지수', page: 'review', type: 'stat' },
-  { id: 'review-rating-distribution', title: '평점 분포', page: 'review', type: 'chart' },
-  { id: 'review-keyword-analysis', title: 'AI 키워드 분석', page: 'review', type: 'table' },
-];
-
-const availableData = [
-  { id: "sales-total", title: "총 판매량", page: "dashboard", type: "stat" },
+const allAvailableData: AISelectableData[] = [
   {
-    id: "amazon-ranking",
-    title: "아마존 현재 순위",
-    page: "ranking",
-    type: "table",
+    id: "dashboard-stat-sales",
+    title: "지난 달 총 판매량",
+    page: "dashboard",
+    type: "stat",
+    fetchContext: "[더미데이터] 지난 달 라네즈 제품 총 판매량: 21,400개",
+  },
+  {
+    id: "dashboard-stat-revenue",
+    title: "지난 달 매출액",
+    page: "dashboard",
+    type: "stat",
+    fetchContext: "[더미데이터] 지난 달 라네즈 제품 총 매출액: $145,242",
+  },
+  {
+    id: "dashboard-product-of-month",
+    title: "이달의 제품",
+    page: "dashboard",
+    type: "stat",
+    fetchContext: async () => {
+      const ctx = await fetchTop1BestSellerAIContext("2026-01");
+      return ctx;
+    },
+  },
+  {
+    id: "dashboard-rising-product",
+    title: "급상승한 제품",
+    page: "dashboard",
+    type: "stat",
+    fetchContext: async () => {
+      const ctx = await fetchRisingProductItemAIContext("2026-01");
+      return ctx;
+    },
   },
 ];
+
 /* ============================================ */
 
 interface AIInsightsProps {
@@ -82,6 +108,22 @@ async function callChatAPI(payload: any): Promise<string> {
 
   const data = await res.json();
   return data.answer;
+}
+
+async function buildContextValues(
+  selectedIds: string[]
+): Promise<Record<string, any>> {
+  const entries = await Promise.all(
+    selectedIds.map(async (id) => {
+      const item = allAvailableData.find((d) => d.id === id);
+      if (!item) return null;
+
+      const data = await item.fetchContext();
+      return [id, data] as const;
+    })
+  );
+
+  return Object.fromEntries(entries.filter(Boolean) as Array<[string, any]>);
 }
 
 export function AIInsights({ cartItems }: AIInsightsProps) {
@@ -128,7 +170,7 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
 
     // 선택된 데이터: id -> title
     const attachedDataTitles = selectedData.map((id) => {
-      const item = availableData.find((d) => d.id === id);
+      const item = allAvailableData.find((d) => d.id === id);
       return item?.title || id;
     });
 
@@ -154,10 +196,25 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
         })
       );
 
+      // 선택된 데이터에 대해 API 호출
+      const contextValues =
+        selectedData.length > 0
+          ? await buildContextValues(selectedData)
+          : undefined;
+
+      // ===== DEBUG LOG =====
+      console.group("AI Chat Payload Debug");
+      console.log("messages:", historyForAPI);
+      console.log("selectedDataIds:", selectedData);
+      console.log("selectedDataTitles:", attachedDataTitles);
+      console.log("contextValues:", contextValues);
+      console.groupEnd();
+
       const reply = await callChatAPI({
         messages: historyForAPI,
         selectedDataIds: selectedData,
         selectedDataTitles: attachedDataTitles,
+        contextValues,
       });
 
       const aiResponse: Message = {
@@ -192,9 +249,13 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
   };
 
   const cartDataIds = cartItems.map((item) => item.uniqueKey);
-  const otherData = allAvailableData.filter(
-    (data) => !cartDataIds.includes(data.id)
-  );
+
+  const pocketData = allAvailableData.filter((d) => cartDataIds.includes(d.id));
+  const otherData = allAvailableData.filter((d) => !cartDataIds.includes(d.id));
+
+  const selectedDataItems = selectedData
+    .map((id) => allAvailableData.find((d) => d.id === id))
+    .filter(Boolean);
 
   return (
     <div className="ai-insights">
@@ -262,6 +323,26 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
         ))}
       </section>
 
+      {/* ===== Selected Data Chips ===== */}
+      {selectedDataItems.length > 0 && (
+        <div className="ai-selected-data">
+          {selectedDataItems.map((d) => (
+            <span key={d.id} className="ai-selected-chip">
+              {d.title}
+              <button
+                type="button"
+                className="ai-selected-chip__remove"
+                onClick={() =>
+                  setSelectedData((prev) => prev.filter((id) => id !== d.id))
+                }
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* ===== Input ===== */}
       <form
         className="ai-input"
@@ -296,31 +377,111 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
       {/* ===== Modal ===== */}
       <AnimatePresence>
         {showModal && (
-          <motion.div className="ai-modal" onClick={() => setShowModal(false)}>
+          <motion.div
+            className="ai-modal"
+            onClick={() => setShowModal(false)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
             <motion.div
               className="ai-modal__content"
               onClick={(e) => e.stopPropagation()}
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
             >
               <h2>분석할 데이터 선택</h2>
 
-              {availableData.map((d) => (
-                <button
-                  key={d.id}
-                  className={`ai-data-item ${
-                    selectedData.includes(d.id) ? "is-selected" : ""
-                  }`}
-                  onClick={() => toggleData(d.id)}
-                >
-                  {d.title}
-                </button>
-              ))}
+              <div className="ai-data-list">
+                {/* ===== Pocket 섹션 ===== */}
+                <h3 className="ai-data-section-title">Pocket에 담은 데이터</h3>
 
-              <button
-                className="ai-modal__close"
-                onClick={() => setShowModal(false)}
-              >
-                선택 완료 ({selectedData.length})
-              </button>
+                {pocketData.length === 0 ? (
+                  <div className="ai-data-empty">
+                    아직 Pocket에 담긴 데이터가 없습니다. + 버튼을 눌러 데이터를
+                    담아보세요!
+                  </div>
+                ) : (
+                  pocketData.map((d) => {
+                    const isSelected = selectedData.includes(d.id);
+
+                    return (
+                      <button
+                        key={d.id}
+                        type="button"
+                        className={`ai-data-card ${
+                          isSelected ? "is-selected" : ""
+                        }`}
+                        onClick={() => toggleData(d.id)}
+                      >
+                        <div className="ai-data-card__main">
+                          <span className="ai-data-card__title">{d.title}</span>
+
+                          <div className="ai-data-card__tags">
+                            <span className="ai-tag">{d.page}</span>
+                            <span className="ai-tag">{d.type}</span>
+                          </div>
+                        </div>
+
+                        {isSelected && (
+                          <div className="ai-data-card__check">✓</div>
+                        )}
+                      </button>
+                    );
+                  })
+                )}
+
+                {/* ===== 사용 가능한 모든 데이터 ===== */}
+                <h3 className="ai-data-section-title">
+                  사용 가능한 모든 데이터
+                </h3>
+
+                {otherData.map((d) => {
+                  const isSelected = selectedData.includes(d.id);
+
+                  return (
+                    <button
+                      key={d.id}
+                      type="button"
+                      className={`ai-data-card ${
+                        isSelected ? "is-selected" : ""
+                      }`}
+                      onClick={() => toggleData(d.id)}
+                    >
+                      <div className="ai-data-card__main">
+                        <span className="ai-data-card__title">{d.title}</span>
+
+                        <div className="ai-data-card__tags">
+                          <span className="ai-tag">{d.page}</span>
+                          <span className="ai-tag">{d.type}</span>
+                        </div>
+                      </div>
+
+                      {isSelected && (
+                        <div className="ai-data-card__check">✓</div>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="ai-modal__footer">
+                <button
+                  className="ai-modal__cancel"
+                  onClick={() => setShowModal(false)}
+                >
+                  취소
+                </button>
+
+                <button
+                  className="ai-modal__confirm"
+                  onClick={() => setShowModal(false)}
+                  disabled={selectedData.length === 0}
+                >
+                  {selectedData.length}개 선택 완료
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

@@ -235,7 +235,7 @@ export function Dashboard({
             rating={top1Product.rating}
             reviewCount={top1Product.reviewCount}
             growth={top1Product.growth}
-            uniqueKey="stat-product-month-1"
+            uniqueKey="dashboard-product-of-month"
             addToCart={addToCart}
             removeByUniqueKey={removeByUniqueKey}
             isInCart={isInCart}
@@ -251,7 +251,7 @@ export function Dashboard({
             rating={risingProduct.rating}
             reviewCount={risingProduct.reviewCount}
             growth={risingProduct.growth}
-            uniqueKey="stat-product-rising"
+            uniqueKey="dashboard-rising-product"
             addToCart={addToCart}
             removeByUniqueKey={removeByUniqueKey}
             isInCart={isInCart}

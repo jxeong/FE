@@ -101,6 +101,50 @@ export async function fetchTop1BestSeller(month: string) {
   };
 }
 
+// [3] 매출 1위 제품 - AI 컨텍스트용 인터페이스
+export interface Top1BestSellerAIContext {
+  month: string;
+  product_name: string;
+  rank: number;
+  last_month_sales: number;
+  rating: number;
+  review_count: number;
+}
+
+export async function fetchTop1BestSellerAIContext(month: string) {
+  const res = await fetch(
+    `${API_BASE_URL}/api/dashboard/bestsellers/top1?month=${month}`
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch top1 bestseller");
+  }
+
+  const data = await res.json();
+
+  const raw =
+    data?.item ??
+    data?.items ??
+    data?.data?.item ??
+    data?.data?.items ??
+    null;
+
+  if (!raw) {
+    console.error("[Top1 AI] raw is undefined", data);
+    return null;
+  }
+
+  return {
+    month: data.month ?? data.data?.month,
+    product_name: raw.product_name,
+    rank: raw.rank,
+    last_month_sales: raw.last_month_sales,
+    rating: raw.rating,
+    review_count: raw.review_count,
+  };
+}
+
+
 // [4] 급상승  제품
 export interface RisingProductItemRaw {
   image_url: string;
@@ -141,3 +185,39 @@ export async function fetchRisingProduct() {
   };
 }
 
+// [4] 급상승  제품 - AI 컨텍스트용 인터페이스
+export interface RisingProductItemAIContext {
+  product_name: string;
+  rating: number;
+  review_count: number;
+  growth_rate: string;
+}
+
+export async function fetchRisingProductItemAIContext(month: string) {
+  const res = await fetch(`${API_BASE_URL}/api/dashboard/rising`);
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch rising product");
+  }
+
+  const data = await res.json();
+
+  const raw =
+    data?.item ??
+    data?.items ??
+    data?.data?.item ??
+    data?.data?.items ??
+    null;
+
+  if (!raw) {
+    console.error("[Top1 AI] raw is undefined", data);
+    return null;
+  }
+
+  return {
+    product_name: raw.product_name,
+    rating: raw.rating,
+    review_count: raw.review_count,
+    growth_rate: raw.growth_rate,
+  };
+}
