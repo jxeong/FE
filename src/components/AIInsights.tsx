@@ -12,12 +12,44 @@ interface Message {
   attachedData?: string[];
 }
 
+/** ===== API payload types ===== */
+type ChatMessageForAPI = {
+  role: "user" | "assistant";
+  content: string;
+  attachedData?: string[];
+};
+
+type ChatRequest = {
+  messages: ChatMessageForAPI[];
+  selectedDataIds?: string[];
+  selectedDataTitles?: string[];
+};
+
+type ChatResponse = {
+  answer: string;
+};
+
 /* ===== 임시 더미 ===== */
 const suggestedQuestions = [
   "이번 달 매출 트렌드를 분석해주세요.",
   "Water Sleeping Mask의 아마존 순위 변동을 알려주세요.",
   "최근 일주일간 판매량이 급증한 제품이 있나요?",
   "다음 분기 전략을 제안해 주세요.",
+];
+
+const allAvailableData = [
+  { id: 'dashboard-stat-sales', title: '총 판매량', page: 'dashboard', type: 'stat' },
+  { id: 'dashboard-stat-revenue', title: '매출액', page: 'dashboard', type: 'stat' },
+  { id: 'dashboard-product-of-month', title: '이달의 제품', page: 'dashboard', type: 'stat' },
+  { id: 'dashboard-rising-product', title: '급상승한 제품', page: 'dashboard', type: 'stat' },
+  { id: 'dashboard-chart-monthly-sales', title: '지난 달 판매 추이', page: 'dashboard', type: 'chart' },
+  { id: 'dashboard-table-top5', title: '베스트 셀러 TOP 5', page: 'dashboard', type: 'table' },
+  { id: 'dashboard-table-details', title: '제품별 상세 현황', page: 'dashboard', type: 'table' },
+  { id: 'ranking-table-amazon-current', title: '아마존 현재 순위', page: 'ranking', type: 'table' },
+  { id: 'review-sentiment-chart', title: '감정 분석 분포', page: 'review', type: 'chart' },
+  { id: 'review-reputation-score', title: '평판 지수', page: 'review', type: 'stat' },
+  { id: 'review-rating-distribution', title: '평점 분포', page: 'review', type: 'chart' },
+  { id: 'review-keyword-analysis', title: 'AI 키워드 분석', page: 'review', type: 'table' },
 ];
 
 const availableData = [
@@ -35,6 +67,23 @@ interface AIInsightsProps {
   cartItems: InsightItem[];
 }
 
+/** ===== API call helper ===== */
+async function callChatAPI(payload: any): Promise<string> {
+  const res = await fetch("http://boradora.store/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`API Error ${res.status}: ${text || res.statusText}`);
+  }
+
+  const data = await res.json();
+  return data.answer;
+}
+
 export function AIInsights({ cartItems }: AIInsightsProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -50,8 +99,8 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
-
   const endRef = useRef<HTMLDivElement>(null);
+
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -74,35 +123,66 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
     });
   }, [messages]);
 
-  const handleSend = (text = input) => {
+  const handleSend = async (text = input) => {
     if (!text.trim() && selectedData.length === 0) return;
+
+    // 선택된 데이터: id -> title
+    const attachedDataTitles = selectedData.map((id) => {
+      const item = availableData.find((d) => d.id === id);
+      return item?.title || id;
+    });
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
       content: text || "선택한 데이터를 분석해주세요",
       timestamp: new Date(),
-      attachedData: selectedData,
+      attachedData: selectedData.length > 0 ? attachedDataTitles : undefined,
     };
 
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      // 최신 히스토리(기존 messages + 방금 보낸 userMessage)를 API로 보냄
+      const historyForAPI: ChatMessageForAPI[] = [...messages, userMessage].map(
+        (m) => ({
+          role: m.role,
+          content: m.content,
+          attachedData: m.attachedData,
+        })
+      );
+
+      const reply = await callChatAPI({
+        messages: historyForAPI,
+        selectedDataIds: selectedData,
+        selectedDataTitles: attachedDataTitles,
+      });
+
+      const aiResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: reply,
+        timestamp: new Date(),
+      };
+
+      setMessages((prev) => [...prev, aiResponse]);
+    } catch (e: any) {
+      const errMsg = e?.message ?? "Unknown error";
       setMessages((prev) => [
         ...prev,
         {
-          id: `${Date.now()}-ai`,
+          id: (Date.now() + 2).toString(),
           role: "assistant",
-          content:
-            "현재는 더미 응답입니다.\n백엔드 연결 시 실제 분석 결과가 표시됩니다.",
+          content: `에러가 발생했어요: ${errMsg}`,
           timestamp: new Date(),
         },
       ]);
+    } finally {
       setIsTyping(false);
       setSelectedData([]);
-    }, 1200);
+    }
   };
 
   const toggleData = (id: string) => {
@@ -110,6 +190,11 @@ export function AIInsights({ cartItems }: AIInsightsProps) {
       prev.includes(id) ? prev.filter((v) => v !== id) : [...prev, id]
     );
   };
+
+  const cartDataIds = cartItems.map((item) => item.uniqueKey);
+  const otherData = allAvailableData.filter(
+    (data) => !cartDataIds.includes(data.id)
+  );
 
   return (
     <div className="ai-insights">
