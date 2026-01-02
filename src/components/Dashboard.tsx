@@ -5,7 +5,7 @@ import {
   Package,
   Star,
   Sparkles,
-} from 'lucide-react';
+} from "lucide-react";
 import {
   LineChart,
   Line,
@@ -16,35 +16,34 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import { AddToCartButton } from './AddToCartButton';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import type { InsightItem } from '../App';
-import '../styles/Dashboard.css';
-import '../styles/Dashtable.css';
-import insightIcon from '../assets/sparkler.svg';
-import { BestSellerTop5 } from './DashBestSellerTop5';
-import { ProductDetailTable } from './DashProductDetailTable';
-import { useState } from 'react';
+} from "recharts";
+import { AddToCartButton } from "./AddToCartButton";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import type { InsightItem } from "../App";
+import "../styles/Dashboard.css";
+import "../styles/Dashtable.css";
+import insightIcon from "../assets/sparkler.svg";
+import { BestSellerTop5 } from "./DashBestSellerTop5";
+import { ProductDetailTable } from "./DashProductDetailTable";
+import { useState } from "react";
 
 interface DashboardProps {
-  addToCart: (item: Omit<InsightItem, 'id' | 'timestamp'>) => void;
+  addToCart: (item: Omit<InsightItem, "id" | "timestamp">) => void;
   removeByUniqueKey: (uniqueKey: string) => void;
   isInCart: (uniqueKey: string) => boolean;
 }
 
-
 const salesData = [
-  { date: '11/22', sales: 3800 },
-  { date: '11/23', sales: 4200 },
-  { date: '11/24', sales: 3900 },
-  { date: '11/25', sales: 5100 },
-  { date: '11/26', sales: 4600 },
-  { date: '11/27', sales: 5800 },
-  { date: '11/28', sales: 6200 },
-  { date: '11/29', sales: 5900 },
-  { date: '11/30', sales: 6500 },
-  { date: '12/01', sales: 5800 },
+  { date: "11/22", sales: 3800 },
+  { date: "11/23", sales: 4200 },
+  { date: "11/24", sales: 3900 },
+  { date: "11/25", sales: 5100 },
+  { date: "11/26", sales: 4600 },
+  { date: "11/27", sales: 5800 },
+  { date: "11/28", sales: 6200 },
+  { date: "11/29", sales: 5900 },
+  { date: "11/30", sales: 6500 },
+  { date: "12/01", sales: 5800 },
 ];
 
 function CustomTooltip({ activePoint }: any) {
@@ -54,8 +53,8 @@ function CustomTooltip({ activePoint }: any) {
     <div
       className="chart-tooltip"
       style={{
-        transform: 'translate(-100%, -100%)',
-        pointerEvents: 'none',
+        transform: "translate(-100%, -100%)",
+        pointerEvents: "none",
       }}
     >
       <div className="chart-tooltip__date">{activePoint.label}</div>
@@ -66,20 +65,17 @@ function CustomTooltip({ activePoint }: any) {
   );
 }
 
-
 export function Dashboard({
   addToCart,
   removeByUniqueKey,
   isInCart,
 }: DashboardProps) {
-
   const [activePoint, setActivePoint] = useState<{
     x: number;
     y: number;
     label: string;
     value: number;
   } | null>(null);
-
 
   return (
     <div className="dashboard">
@@ -103,7 +99,7 @@ export function Dashboard({
       {/* Stats */}
       <section className="dashboard__stats-grid">
         <StatCard
-          title="총 판매량 (지난 달)"
+          title="지난 달 총 판매량"
           value="54,280"
           change="+12.5%"
           icon={Package}
@@ -114,7 +110,7 @@ export function Dashboard({
           isInCart={isInCart}
         />
         <StatCard
-          title="매출액 (지난 달)"
+          title="지난 달 매출액"
           value="$1.2M"
           change="+8.3%"
           icon={DollarSign}
@@ -126,24 +122,36 @@ export function Dashboard({
         />
 
         <StatCard
-          title="매출액 (지난 달)"
-          value="$1.2M"
-          change="+8.3%"
-          icon={DollarSign}
-          trend="up"
-          uniqueKey="dashboard-stat-revenue"
+          variant="product"
+          label="이달의 제품"
+          title="Water Sleeping Mask"
+          value="" // 타입 유지용
+          change="" // 타입 유지용
+          trend="up" // 타입 유지용
+          icon={null}
+          imageUrl="https://m.media-amazon.com/images/I/61STtl3UBpL._SX466_.jpg"
+          rating={4.7}
+          reviewCount={3245}
+          change="23%"
+          uniqueKey="stat-product-month-1"
           addToCart={addToCart}
           removeByUniqueKey={removeByUniqueKey}
           isInCart={isInCart}
         />
 
         <StatCard
-          title="매출액 (지난 달)"
-          value="$1.2M"
-          change="+8.3%"
-          icon={DollarSign}
-          trend="up"
-          uniqueKey="dashboard-stat-revenue"
+          variant="product"
+          label="급상승한 제품"
+          title="Water Bank Moisture Cream"
+          value="" // 타입 유지용
+          change="" // 타입 유지용
+          trend="up" // 타입 유지용
+          icon={null}
+          imageUrl="https://m.media-amazon.com/images/I/81u4d6Pn6JL._SX466_.jpg"
+          rating={4.5}
+          reviewCount={1876}
+          change="47%"
+          uniqueKey="stat-month-product-2"
           addToCart={addToCart}
           removeByUniqueKey={removeByUniqueKey}
           isInCart={isInCart}
@@ -159,17 +167,17 @@ export function Dashboard({
             <AddToCartButton
               onAdd={() =>
                 addToCart({
-                  type: 'chart',
-                  title: '지난 달 판매 추이',
+                  type: "chart",
+                  title: "지난 달 판매 추이",
                   data: salesData,
-                  page: 'dashboard',
-                  uniqueKey: 'dashboard-chart-monthly-sales',
+                  page: "dashboard",
+                  uniqueKey: "dashboard-chart-monthly-sales",
                 })
               }
               onRemove={() =>
-                removeByUniqueKey('dashboard-chart-monthly-sales')
+                removeByUniqueKey("dashboard-chart-monthly-sales")
               }
-              isInCart={isInCart('dashboard-chart-monthly-sales')}
+              isInCart={isInCart("dashboard-chart-monthly-sales")}
             />
           </div>
         </div>
@@ -194,12 +202,14 @@ export function Dashboard({
               }}
               onMouseLeave={() => setActivePoint(null)}
             >
-
-
               <defs>
                 <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="0%" stopColor="#6691FF" stopOpacity={0.75} />
-                  <stop offset="100%" stopColor="#ffffffff" stopOpacity={0.05} />
+                  <stop
+                    offset="100%"
+                    stopColor="#ffffffff"
+                    stopOpacity={0.05}
+                  />
                 </linearGradient>
               </defs>
 
@@ -209,8 +219,18 @@ export function Dashboard({
                 stroke="#E5E5E5"
                 strokeDasharray="0"
               />
-              <XAxis dataKey="date" tick={{ fill: '#C4C4C4' }} axisLine={{ stroke: '#C4C4C4' }} tickLine={false} tickMargin={12} />
-              <YAxis tick={{ fill: '#C4C4C4' }} axisLine={false} tickLine={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fill: "#C4C4C4" }}
+                axisLine={{ stroke: "#C4C4C4" }}
+                tickLine={false}
+                tickMargin={12}
+              />
+              <YAxis
+                tick={{ fill: "#C4C4C4" }}
+                axisLine={false}
+                tickLine={false}
+              />
 
               <Tooltip
                 content={<CustomTooltip activePoint={activePoint} />}
@@ -220,13 +240,12 @@ export function Dashboard({
                     : undefined
                 }
                 cursor={{
-                  stroke: '#C4C4C4',
-                  strokeDasharray: '5 5',
+                  stroke: "#C4C4C4",
+                  strokeDasharray: "5 5",
                   strokeWidth: 1,
                 }}
                 isAnimationActive={false}
               />
-
 
               <Area
                 type="monotone"
@@ -253,24 +272,37 @@ export function Dashboard({
         removeByUniqueKey={removeByUniqueKey}
         isInCart={isInCart}
       />
-
-    </div >
+    </div>
   );
 }
 
+type StatCardVariant = "kpi" | "product";
+
 interface StatCardProps {
+  /* 공통 */
+  variant?: StatCardVariant; // 기본: kpi
   title: string;
+  uniqueKey: string;
+  addToCart: DashboardProps["addToCart"];
+  removeByUniqueKey: DashboardProps["removeByUniqueKey"];
+  isInCart: DashboardProps["isInCart"];
+
+  /* KPI 카드*/
   value: string;
   change: string;
   icon: any;
-  trend: 'up' | 'down';
-  uniqueKey: string;
-  addToCart: DashboardProps['addToCart'];
-  removeByUniqueKey: DashboardProps['removeByUniqueKey'];
-  isInCart: DashboardProps['isInCart'];
+  trend: "up" | "down";
+
+  /* Product 카드 */
+  imageUrl?: string;
+  rating?: number;
+  reviewCount?: number;
+  growth?: string;
+  label?: string;
 }
 
 function StatCard({
+  variant = "kpi",
   title,
   value,
   change,
@@ -280,28 +312,98 @@ function StatCard({
   addToCart,
   removeByUniqueKey,
   isInCart,
+  imageUrl,
+  rating,
+  reviewCount,
+  growth,
+  label,
 }: StatCardProps) {
-  return (
-    <div className="stat-card">
-      {/* 왼쪽 콘텐츠 */}
-      <div className="stat-card__content">
-        <h3 className="stat-card__title">{title}</h3>
-        <p className="stat-card__value">{value}</p>
+  /* ================= KPI 카드 ================= */
+  if (variant === "kpi") {
+    return (
+      <div className="stat-card stat-card--kpi">
+        {/* 왼쪽 콘텐츠 */}
+        <div className="stat-card__content">
+          <h3 className="stat-card__title">{title}</h3>
+          <p className="stat-card__value">{value}</p>
+        </div>
 
-        <div className={`stat-card__badge ${trend === 'up' ? 'is-up' : 'is-down'}`}>
-          {trend === 'up' ? '↑' : '↓'} {change}
+        {/* 하단 고정 영역 */}
+        <div className="stat-card__footer">
+          <div
+            className={`stat-card__badge ${
+              trend === "up" ? "is-up" : "is-down"
+            }`}
+          >
+            {trend === "up" ? "↑" : "↓"} {change}
+          </div>
+
+          {/* 오른쪽 + 버튼 */}
+          <div className="stat-card__action">
+            <AddToCartButton
+              onAdd={() =>
+                addToCart({
+                  type: "stat",
+                  title,
+                  data: { value, change, trend },
+                  page: "dashboard",
+                  uniqueKey,
+                })
+              }
+              onRemove={() => removeByUniqueKey(uniqueKey)}
+              isInCart={isInCart(uniqueKey)}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+  /* ================= Product 카드 ================= */
+  return (
+    <div className="stat-card stat-card--product">
+      {/* 상단 라벨 */}
+      <div className="stat-card__header">
+        <span className="stat-card__tag">{label}</span>
+      </div>
+
+      {/* 본문 */}
+      <div className="stat-card__content stat-card__content--product">
+        {/* 왼쪽: 이미지 */}
+        <ImageWithFallback
+          src={imageUrl}
+          alt={title}
+          fallbackSrc="https://via.placeholder.com/80"
+        />
+
+        {/* 오른쪽: 텍스트 정보 */}
+        <div className="stat-card__product-info">
+          <h3 className="stat-card__title">{title}</h3>
+
+          <div className="stat-card__rating">
+            <Star size={16} fill="#FFA82F" color="#FFA82F" />
+            {rating} <span>({reviewCount?.toLocaleString()})</span>
+          </div>
         </div>
       </div>
 
-      {/* 오른쪽 + 버튼 */}
+      {/* 성장률 */}
+      <div className="stat-card__badge-wrapper">
+        <div
+          className={`stat-card__badge ${trend === "up" ? "is-up" : "is-down"}`}
+        >
+          {trend === "up" ? "↑" : "↓"} {change} 성장
+        </div>
+      </div>
+
+      {/* 플러스 버튼 */}
       <div className="stat-card__action">
         <AddToCartButton
           onAdd={() =>
             addToCart({
-              type: 'stat',
+              type: "stat",
               title,
-              data: { value, change, trend },
-              page: 'dashboard',
+              data: { rating, reviewCount, growth },
+              page: "dashboard",
               uniqueKey,
             })
           }
@@ -310,6 +412,5 @@ function StatCard({
         />
       </div>
     </div>
-
   );
 }
