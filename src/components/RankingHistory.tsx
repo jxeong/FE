@@ -22,6 +22,16 @@ import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { TooltipProps } from "recharts";
 import type { InsightItem } from "../App";
 import "../styles/RankingHistory.css";
+import { fetchCurrentRanking } from "../api/rankings";
+
+export const CATEGORY_MAP = {
+  all_beauty: 1,
+  lip_care: 2,
+  skin_care: 3,
+  lip_makeup: 4,
+  face_powder: 5,
+} as const;
+export type CategoryCode = keyof typeof CATEGORY_MAP;
 
 function RankingTooltip({
   active,
@@ -52,11 +62,11 @@ function RankingTooltip({
 /* 선택 카테고리 타입 */
 type PeriodType = "weekly" | "monthly" | "yearly";
 type CategoryType =
-  | "overall"
-  | "lipcare"
-  | "skincare"
-  | "lipmakeup"
-  | "facepowder";
+  | "all_beauty"
+  | "lip_care"
+  | "skin_care"
+  | "lip_makeup"
+  | "face_powder";
 
 /* 더미데이터 (백엔드 연동 대비) */
 const laneigeProducts = [
@@ -86,60 +96,6 @@ const laneigeProducts = [
     categories: { overall: 45, facepowder: 5 },
   },
 ];
-
-const generateAmazonRankings = () => {
-  return [
-    {
-      rank: 1,
-      brand: "Fresh",
-      name: "Fresh Rose Face Mask",
-      isLaneige: false,
-      prevRank: 2,
-    },
-    {
-      rank: 2,
-      brand: "LANEIGE",
-      name: "Lip Sleeping Mask",
-      isLaneige: true,
-      prevRank: 2,
-    },
-    {
-      rank: 3,
-      brand: "Clinique",
-      name: "Clinique Moisture Surge",
-      isLaneige: false,
-      prevRank: 4,
-    },
-    {
-      rank: 4,
-      brand: "CeraVe",
-      name: "CeraVe Moisturizing Cream",
-      isLaneige: false,
-      prevRank: 6,
-    },
-    {
-      rank: 5,
-      brand: "Kiehl’s",
-      name: "Kiehl’s Ultra Facial Cream",
-      isLaneige: false,
-      prevRank: 5,
-    },
-    {
-      rank: 6,
-      brand: "LANEIGE",
-      name: "Water Sleeping Mask",
-      isLaneige: true,
-      prevRank: 3,
-    },
-    {
-      rank: 7,
-      brand: "Neutrogena",
-      name: "Neutrogena Hydro Boost",
-      isLaneige: false,
-      prevRank: 7,
-    },
-  ];
-};
 
 /* =======================
    Config
@@ -205,33 +161,40 @@ export function RankingHistory({
   isInCart,
 }: RankingHistoryProps) {
   const [selectedCategory, setSelectedCategory] =
-    useState<CategoryType>("overall");
+    useState<CategoryType>("all_beauty");
+  const categoryId = CATEGORY_MAP[selectedCategory];
+
+  // 순위 데이터 상태
+  type RankingItem = {
+    rank: number;
+    product_name: string;
+    is_laneige: boolean;
+    prev_rank: number;
+    rank_change: number;
+  };
+
+  const [rankings, setRankings] = useState<RankingItem[]>([]);
+  const [loading, setLoading] = useState(false);
 
   const categoryConfigs: Record<CategoryType, { label: string }> = {
-    overall: { label: "전체" },
-    lipcare: { label: "립 케어" },
-    skincare: { label: "스킨 케어" },
-    lipmakeup: { label: "립 메이크업" },
-    facepowder: { label: "페이스 파우더" },
+    all_beauty: { label: "전체" },
+    lip_care: { label: "립 케어" },
+    skin_care: { label: "스킨 케어" },
+    lip_makeup: { label: "립 메이크업" },
+    face_powder: { label: "페이스 파우더" },
   };
+
   const tableKey = `ranking-table-amazon-${selectedCategory}`;
 
   const [currentTime, setCurrentTime] = useState(new Date());
   const [searchTerm, setSearchTerm] = useState("");
   const [productSearchTerm, setProductSearchTerm] = useState("");
-  const [amazonRankings] = useState(generateAmazonRankings());
 
   const [selectedProduct, setSelectedProduct] = useState(
     laneigeProducts[0].name
   );
   const [period, setPeriod] = useState<PeriodType>("weekly");
   const [scrollX, setScrollX] = useState(0);
-
-  const filteredRankings = amazonRankings.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.brand.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const filteredProducts = laneigeProducts.filter((p) =>
     p.name.toLowerCase().includes(productSearchTerm.toLowerCase())
@@ -249,6 +212,21 @@ export function RankingHistory({
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const categoryId = CATEGORY_MAP[selectedCategory];
+        const res = await fetchCurrentRanking(categoryId);
+        setRankings(res.items);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, [selectedCategory]);
 
   const handleScroll = (dir: "left" | "right") => {
     const el = document.getElementById("ranking-product-scroll");
@@ -326,191 +304,58 @@ export function RankingHistory({
               </tr>
             </thead>
             <tbody>
-              {filteredRankings.slice(0, 30).map((p) => {
-                const change = p.prevRank - p.rank;
-                return (
+              {loading ? (
+                <tr>
+                  <td colSpan={5}>로딩 중...</td>
+                </tr>
+              ) : (
+                rankings.slice(0, 30).map((item) => (
                   <tr
-                    key={p.rank}
+                    key={item.rank}
                     className={`ranking-table__row ${
-                      p.isLaneige ? "ranking-table__row--laneige" : ""
+                      item.is_laneige ? "ranking-table__row--laneige" : ""
                     }`}
                   >
                     <td>
                       <span
                         className={`ranking-badge ${
-                          p.isLaneige ? "ranking-badge--laneige" : ""
+                          item.is_laneige ? "ranking-badge--laneige" : ""
                         }`}
                       >
-                        {p.rank}
+                        {item.rank}
                       </span>
                     </td>
-                    <td>{p.brand}</td>
-                    <td>{p.name}</td>
-                    <td className="prev-rank">{p.prevRank}위</td>
+
+                    {/* 브랜드 정보 없음 */}
+                    <td>{item.product_name.split(" ")[0]}</td>
+
+                    <td>{item.product_name}</td>
+
+                    <td className="prev-rank">{item.prev_rank}위</td>
+
                     <td className="rank-change">
-                      {change > 0 && (
-                        <span className="rank-up">▲ +{change}</span>
+                      {item.rank_change > 0 && (
+                        <span className="rank-up">▲ +{item.rank_change}</span>
                       )}
-                      {change < 0 && (
-                        <span className="rank-down">▼ -{Math.abs(change)}</span>
+                      {item.rank_change < 0 && (
+                        <span className="rank-down">
+                          ▼ {Math.abs(item.rank_change)}
+                        </span>
                       )}
-                      {change === 0 && (
+                      {item.rank_change === 0 && (
                         <span className="rank-neutral">변동 없음</span>
                       )}
                     </td>
                   </tr>
-                );
-              })}
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </section>
 
       {/* ================= 라네즈 제품 차트 ================= */}
-      <section className="ranking-card ranking-card--chart">
-        {/* ===== Header ===== */}
-        <header className="ranking-card__header ranking-card__header--chart">
-          <h2 className="ranking-card__title">LANEIGE 제품 순위 변동 추이</h2>
-
-          <AddToCartButton
-            onAdd={() =>
-              addToCart({
-                type: "chart",
-                title: `${periodConfigs[period].label} ${selectedProduct} 순위 추이`,
-                data: chartData,
-                page: "ranking",
-                uniqueKey: `ranking-chart-${selectedProduct}-${period}`,
-              })
-            }
-            onRemove={() =>
-              removeByUniqueKey(`ranking-chart-${selectedProduct}-${period}`)
-            }
-            isInCart={isInCart(`ranking-chart-${selectedProduct}-${period}`)}
-          />
-        </header>
-
-        {/* ===== Product Search ===== */}
-        <div className="ranking-chart__search">
-          <Search className="ranking-chart__search-icon" />
-          <input
-            placeholder="제품명 검색"
-            value={productSearchTerm}
-            onChange={(e) => setProductSearchTerm(e.target.value)}
-          />
-        </div>
-
-        {/* ===== Period Filter ===== */}
-        <div className="ranking-chart__period">
-          {(Object.keys(periodConfigs) as PeriodType[]).map((p) => (
-            <button
-              key={p}
-              className={`ranking-chart__period-btn ${
-                period === p ? "is-active" : ""
-              }`}
-              onClick={() => setPeriod(p)}
-            >
-              {periodConfigs[p].label}
-            </button>
-          ))}
-        </div>
-
-        {/* ===== Product Selector ===== */}
-        <div className="product-selector">
-          <button
-            className="scroll-btn scroll-btn--left"
-            onClick={() => handleScroll("left")}
-          >
-            <ChevronLeft />
-          </button>
-
-          <div id="ranking-product-scroll" className="product-scroll">
-            {filteredProducts.map((p) => (
-              <button
-                key={p.name}
-                className={`product-card ${
-                  selectedProduct === p.name ? "product-card--active" : ""
-                }`}
-                onClick={() => setSelectedProduct(p.name)}
-              >
-                {/* <span className="product-card__rank">
-                  #{p.categories.overall}
-                </span> */}
-
-                <ImageWithFallback
-                  src={p.imageUrl}
-                  alt={p.name}
-                  fallbackSrc="https://via.placeholder.com/150"
-                />
-
-                <p className="product-card__name">{p.name}</p>
-              </button>
-            ))}
-          </div>
-
-          <button
-            className="scroll-btn scroll-btn--right"
-            onClick={() => handleScroll("right")}
-          >
-            <ChevronRight />
-          </button>
-        </div>
-
-        {/* ===== Selected Product Info ===== */}
-        <div className="ranking-chart__product-info">
-          <h3>{selectedProduct}</h3>
-          <p>
-            {periodConfigs[period].label} {selectedProduct} 순위 변동
-          </p>
-        </div>
-
-        {/* ===== Chart ===== */}
-        <div className="ranking-chart">
-          <ResponsiveContainer width="100%" height={360}>
-            <LineChart data={chartData}>
-              <CartesianGrid
-                horizontal={true}
-                vertical={false}
-                stroke="#E5E5E5"
-                strokeDasharray="0"
-              />
-              <XAxis
-                dataKey="date"
-                tick={{ fill: "#C4C4C4" }}
-                axisLine={{ stroke: "#C4C4C4" }}
-                tickLine={false}
-                tickMargin={12}
-              />
-              <YAxis
-                tick={{ fill: "#C4C4C4" }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <Tooltip
-                content={<RankingTooltip />}
-                cursor={{ stroke: "#c7d4ff", strokeWidth: 1 }}
-              />
-              <Legend
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{ top: -10 }}
-              />
-
-              {categoryKeys.map((cat, i) => (
-                <Line
-                  key={cat}
-                  type="monotone"
-                  dataKey={`${cat}_rank`}
-                  name={categoryConfigs[cat].label}
-                  stroke={i === 0 ? "#6691ff" : "#C1D2FF"}
-                  fill={i === 0 ? "#6691ff" : "#C1D2FF"}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
+      
     </div>
   );
 }

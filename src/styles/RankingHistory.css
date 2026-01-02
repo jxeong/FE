@@ -102,7 +102,7 @@
    표 디자인
 ===================== */
 .ranking-table-wrapper {
-  max-height: 420px;
+  max-height: 520px;
   overflow-y: auto;
   overflow-x: hidden;
 }
