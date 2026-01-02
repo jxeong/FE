@@ -25,7 +25,15 @@ import "../styles/Dashtable.css";
 import insightIcon from "../assets/sparkler.svg";
 import { BestSellerTop5 } from "./DashBestSellerTop5";
 import { ProductDetailTable } from "./DashProductDetailTable";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+// API
+import { fetchTop5Bestsellers, fetchTop1BestSeller, fetchRisingProduct } from "../api/dashboard";
+import type {
+  BestSellerItemRaw,
+  Top1BestSellerItemRaw,
+} from "../types/api/dashboard";
+import type { BestSellerTop5Row, ProductDetailRow } from "../types/dashboard";
 
 interface DashboardProps {
   addToCart: (item: Omit<InsightItem, "id" | "timestamp">) => void;
@@ -65,6 +73,14 @@ function CustomTooltip({ activePoint }: any) {
   );
 }
 
+// 현재 연-월 문자열 반환
+function getCurrentMonth(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
 export function Dashboard({
   addToCart,
   removeByUniqueKey,
@@ -76,6 +92,95 @@ export function Dashboard({
     label: string;
     value: number;
   } | null>(null);
+
+  function mapTop5(raw: BestSellerItemRaw[]): BestSellerTop5Row[] {
+    return raw.map((item) => ({
+      rank: item.rank,
+      name: item.product_name,
+      sales: item.last_month_sales,
+      rating: item.rating,
+      reviews: item.review_count,
+    }));
+  }
+
+  function mapProductDetail(raw: BestSellerItemRaw[]): ProductDetailRow[] {
+    return raw.map((item) => ({
+      rank: item.rank,
+      name: item.product_name,
+      sales: item.last_month_sales,
+      prevRank: item.prev_month_rank,
+      rankChange: item.rank_change,
+    }));
+  }
+
+  const [top5Rows, setTop5Rows] = useState<BestSellerTop5Row[]>([]);
+  const [top1Product, setTop1Product] = useState<Top1BestSellerItemRaw | null>(
+    null
+  );
+  const [detailRows, setDetailRows] = useState<ProductDetailRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const month = getCurrentMonth();
+
+  const [risingProduct, setRisingProduct] = useState<any>(null);
+
+  // [1] 베스트셀러 top5 데이터 로드
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetchTop5Bestsellers(month);
+        setTop5Rows(mapTop5(res.items));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  // [2] 제품별 상세 현황 데이터 로드
+  useEffect(() => {
+    async function load() {
+      try {
+        const month = getCurrentMonth();
+        const res = await fetchTop5Bestsellers(month);
+
+        setTop5Rows(mapTop5(res.items));
+        setDetailRows(mapProductDetail(res.items));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    load();
+  }, []);
+
+  // [3] 매출 1위 제품 데이터 로드
+  useEffect(() => {
+    async function loadTop1() {
+      try {
+        const res = await fetchTop1BestSeller(month);
+        setTop1Product(res);
+      } catch (e) {
+        console.error("top1 fetch error", e);
+      }
+    }
+
+    loadTop1();
+  }, [month]);
+
+  // [4] 급상승 제품 데이터 로드
+  useEffect(() => {
+    async function loadRising() {
+      try {
+        const product = await fetchRisingProduct();
+        setRisingProduct(product);
+      } catch (e) {
+        console.error("rising fetch error", e);
+      }
+    }
+
+    loadRising();
+  }, []);
 
   return (
     <div className="dashboard">
@@ -100,7 +205,7 @@ export function Dashboard({
       <section className="dashboard__stats-grid">
         <StatCard
           title="지난 달 총 판매량"
-          value="54,280"
+          value="21,400개"
           change="+12.5%"
           icon={Package}
           trend="up"
@@ -111,7 +216,7 @@ export function Dashboard({
         />
         <StatCard
           title="지난 달 매출액"
-          value="$1.2M"
+          value="$145,242"
           change="+8.3%"
           icon={DollarSign}
           trend="up"
@@ -121,41 +226,37 @@ export function Dashboard({
           isInCart={isInCart}
         />
 
-        <StatCard
-          variant="product"
-          label="이달의 제품"
-          title="Water Sleeping Mask"
-          value="" // 타입 유지용
-          change="" // 타입 유지용
-          trend="up" // 타입 유지용
-          icon={null}
-          imageUrl="https://m.media-amazon.com/images/I/61STtl3UBpL._SX466_.jpg"
-          rating={4.7}
-          reviewCount={3245}
-          change="23%"
-          uniqueKey="stat-product-month-1"
-          addToCart={addToCart}
-          removeByUniqueKey={removeByUniqueKey}
-          isInCart={isInCart}
-        />
+        {top1Product && (
+          <StatCard
+            variant="product"
+            label="지난 달 매출 1위"
+            title={top1Product.title}
+            imageUrl={top1Product.imageUrl}
+            rating={top1Product.rating}
+            reviewCount={top1Product.reviewCount}
+            growth={top1Product.growth}
+            uniqueKey="stat-product-month-1"
+            addToCart={addToCart}
+            removeByUniqueKey={removeByUniqueKey}
+            isInCart={isInCart}
+          />
+        )}
 
-        <StatCard
-          variant="product"
-          label="급상승한 제품"
-          title="Water Bank Moisture Cream"
-          value="" // 타입 유지용
-          change="" // 타입 유지용
-          trend="up" // 타입 유지용
-          icon={null}
-          imageUrl="https://m.media-amazon.com/images/I/81u4d6Pn6JL._SX466_.jpg"
-          rating={4.5}
-          reviewCount={1876}
-          change="47%"
-          uniqueKey="stat-month-product-2"
-          addToCart={addToCart}
-          removeByUniqueKey={removeByUniqueKey}
-          isInCart={isInCart}
-        />
+        {risingProduct && (
+          <StatCard
+            variant="product"
+            label="급상승한 제품"
+            title={risingProduct.title}
+            imageUrl={risingProduct.imageUrl}
+            rating={risingProduct.rating}
+            reviewCount={risingProduct.reviewCount}
+            growth={risingProduct.growth}
+            uniqueKey="stat-product-rising"
+            addToCart={addToCart}
+            removeByUniqueKey={removeByUniqueKey}
+            isInCart={isInCart}
+          />
+        )}
       </section>
 
       {/* Sales Chart */}
@@ -262,12 +363,16 @@ export function Dashboard({
       </div>
 
       <BestSellerTop5
+        data={top5Rows}
+        loading={loading}
         addToCart={addToCart}
         removeByUniqueKey={removeByUniqueKey}
         isInCart={isInCart}
       />
 
       <ProductDetailTable
+        data={detailRows}
+        loading={loading}
         addToCart={addToCart}
         removeByUniqueKey={removeByUniqueKey}
         isInCart={isInCart}
@@ -288,10 +393,10 @@ interface StatCardProps {
   isInCart: DashboardProps["isInCart"];
 
   /* KPI 카드*/
-  value: string;
-  change: string;
-  icon: any;
-  trend: "up" | "down";
+  value?: string;
+  change?: string;
+  icon?: any;
+  trend?: "up" | "down";
 
   /* Product 카드 */
   imageUrl?: string;
@@ -389,9 +494,9 @@ function StatCard({
       {/* 성장률 */}
       <div className="stat-card__badge-wrapper">
         <div
-          className={`stat-card__badge ${trend === "up" ? "is-up" : "is-down"}`}
+          className={`stat-card__badge ${trend === "up" ? "is-down" : "is-up"}`}
         >
-          {trend === "up" ? "↑" : "↓"} {change} 성장
+          {trend === "up" ? "↓" : "↑"} {growth}
         </div>
       </div>
 

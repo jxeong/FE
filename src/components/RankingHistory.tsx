@@ -432,9 +432,9 @@ export function RankingHistory({
                 }`}
                 onClick={() => setSelectedProduct(p.name)}
               >
-                <span className="product-card__rank">
+                {/* <span className="product-card__rank">
                   #{p.categories.overall}
-                </span>
+                </span> */}
 
                 <ImageWithFallback
                   src={p.imageUrl}

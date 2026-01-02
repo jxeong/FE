@@ -93,17 +93,22 @@
   color: #383838;
 }
 
+.table tbody tr:last-child td {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
 /* 순위 */
 .table th:nth-child(1),
 .table td:nth-child(1) {
   width: 80px;
-  padding-left: 25px;
+  padding-left: 30px;
 }
 
 /* 제품명 */
 .table th:nth-child(2),
 .table td:nth-child(2) {
-  width: 380px;
+  width: 400px;
   text-align: left;
   padding-left: 65px;
 }
@@ -149,11 +154,11 @@ td.change {
   font-weight: 600;
 }
 
-td.change.up {
+td.change.down {
   color: #FF2F36;
 }
 
-td.change.down {
+td.change.up {
   color: #13C85E;
 }
 

@@ -40,10 +40,25 @@
 }
 
 .dashboard__stats-grid {
-  display: grid;
+  /* display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.2rem;
-  margin-bottom: 2rem;
+  gap: 1.2rem;*/
+  margin-bottom: 2rem; 
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard__stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard__stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .dashboard__card {
@@ -145,7 +160,7 @@
 /* 오른쪽 + 버튼 */
 .stat-card__action {
   position: absolute;
-  right: 23px;
+  right: 28px;
   bottom: 23px;
 }
 

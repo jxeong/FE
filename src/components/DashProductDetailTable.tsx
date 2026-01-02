@@ -1,85 +1,95 @@
 // components/DashProductDetailTable.tsx
-import { TableCard } from './DashTableCard';
-
-type ProductItem = {
-  rank: number;
-  name: string;
-  sales: number;
-  prev: number;
-  change: number;
-};
-
-const data: ProductItem[] = [
-  { rank: 1, name: 'Water Sleeping Mask', sales: 2840, prev: 3, change: 2 },
-  { rank: 2, name: 'Lip Sleeping Mask', sales: 2180, prev: 1, change: +1 },
-  { rank: 3, name: 'Cream Skin Refiner', sales: 1956, prev: 4, change: 1 },
-  { rank: 4, name: 'Water Bank Moisture Cream', sales: 1742, prev: 7, change: -3 },
-  { rank: 5, name: 'Neo Cushion', sales: 1598, prev: 5, change: 0 },
-];
+import { TableCard } from "./DashTableCard";
+import type { ProductDetailRow } from "../types/dashboard";
 
 function getChangeInfo(change: number) {
   if (change > 0) {
     return {
-      className: 'change up',
+      className: "change up",
       text: `▲ +${change}`,
     };
   }
 
   if (change < 0) {
     return {
-      className: 'change down',
+      className: "change down",
       text: `▼ ${change}`,
     };
   }
 
   return {
-    className: 'change neutral',
-    text: '변동 없음',
+    className: "change neutral",
+    text: "변동 없음",
   };
 }
 
-export function ProductDetailTable(props: any) {
+interface ProductDetailTableProps {
+  data: ProductDetailRow[];
+  loading: boolean;
+  addToCart: any;
+  removeByUniqueKey: any;
+  isInCart: any;
+}
+
+export function ProductDetailTable({
+  data,
+  loading,
+  addToCart,
+  removeByUniqueKey,
+  isInCart,
+}: ProductDetailTableProps) {
   return (
     <TableCard
-      title="제품별 상세 현황"
-      uniqueKey="dashboard-table-detail"
-      {...props}
+      title="베스트 셀러 TOP 5 상세 정보"
+      uniqueKey="dashboard-table-product-detail"
+      cartPayload={{
+        type: "table",
+        title: "베스트 셀러 TOP 5 상세 정보",
+        data,
+        page: "dashboard",
+        uniqueKey: "dashboard-table-product-detail",
+      }}
+      addToCart={addToCart}
+      removeByUniqueKey={removeByUniqueKey}
+      isInCart={isInCart}
     >
-      <table className="table">
-        <thead>
-          <tr>
-            <th>순위</th>
-            <th>제품명</th>
-            <th>지난 달 판매량</th>
-            <th>지난달 순위</th>
-            <th>순위 변동</th>
-          </tr>
-        </thead>
+      {loading ? (
+        <div className="table-loading">로딩 중...</div>
+      ) : (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>제품명</th>
+              <th>지난 달 판매량</th>
+              <th>지난달 순위</th>
+              <th>순위 변동</th>
+            </tr>
+          </thead>
 
-        <tbody>
-          {data.map((item) => {
-            const changeInfo = getChangeInfo(item.change);
+          <tbody>
+            {data.map((item) => {
+              const changeInfo = getChangeInfo(item.rankChange);
 
-            return (
-              <tr key={item.rank}>
-                <td>
-                  <span className="rank-badge">{item.rank}</span>
-                </td>
+              return (
+                <tr key={item.rank}>
+                  <td>
+                    <span className="rank-badge">{item.rank}</span>
+                  </td>
 
-                <td>{item.name}</td>
+                  <td>{item.name}</td>
 
-                <td>{item.sales.toLocaleString()}</td>
+                  <td>{item.sales.toLocaleString()}</td>
 
-                <td>{item.prev}위</td>
+                  <td>{item.prevRank}위</td>
 
-                <td className={changeInfo.className}>
-                  {changeInfo.text}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                  <td className={changeInfo.className}>{changeInfo.text}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      )}
     </TableCard>
   );
 }
