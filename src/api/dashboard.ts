@@ -101,7 +101,7 @@ export async function fetchTop1BestSeller(month: string) {
   };
 }
 
-// [4] 급상승 제품
+// [4] 급상승  제품
 export interface RisingProductItemRaw {
   image_url: string;
   product_name: string;
