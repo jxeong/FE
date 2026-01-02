@@ -1,69 +1,88 @@
 /* Sidebar 전체 */
 .sidebar {
-    width: 16rem;
-    background-color: #F1F5FF;
-    display: flex;
-    flex-direction: column;
+  width: 16rem;
+  background-color: #f1f5ff;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 헤더 */
 .sidebar__header {
-    padding: 2.5rem;
+  padding: 2.5rem;
 }
 
 .sidebar__logo {
-    width: 100%;
-    display: block;
+  width: 100%;
+  display: block;
 }
 
 /* 네비게이션 */
 .sidebar__nav {
-    flex: 1;
-    padding: 1rem;
+  flex: 1;
+  padding: 1rem;
 }
 
 /* 메뉴 아이템 */
 .sidebar__item {
-    font-weight: 500;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: 50px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #374151;
-    transition: background-color 0.2s ease, color 0.2s ease;
+  font-weight: 500;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 50px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #374151;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* 활성 상태 */
 .sidebar__item.is-active {
-    background-color: #6691ff;
-    color: #ffffff;
-    border-radius: 50px;
-    font-weight: 600;
+  background-color: #6691ff;
+  color: #ffffff;
+  border-radius: 50px;
+  font-weight: 600;
 }
 
 .sidebar__icon {
-    width: 1.25rem;
-    height: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 /* 푸터 */
 .sidebar__footer {
-    padding: 1rem;
-    border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 2rem;
 }
 
-.sidebar__updated-label {
-    font-size: 0.75rem;
-    color: #6b7280;
+.sidebar__footer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  padding: 5px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-thickness: 0.8px;
+  text-decoration-color: rgb(136, 136, 136);
 }
 
-.sidebar__updated-date {
-    font-size: 0.875rem;
-    color: #374151;
+.sidebar__footer-item:hover {
+  color: #6691ff;
+  text-decoration-color: #6691ff;
+}
+
+.sidebar__footer-icon {
+  width: 16px;
+  height: 16px;
 }
