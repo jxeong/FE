@@ -28,9 +28,20 @@ const menuItems = [
   { id: "keywords" as PageType, label: "키워드 분석", icon: Search },
 ];
 
-const handleDownloadExcel = async () => {
+function getTodayYYYYMMDD(): string {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}${m}${d}`;
+}
+
+const handleDownloadMarkdown = async () => {
   try {
     const res = await fetch(`${API_BASE_URL}/api/reports/daily/today/download`);
+
+    console.log("status", res.status);
+    console.log("content-type", res.headers.get("content-type"));
 
     if (!res.ok) {
       throw new Error("다운로드 실패");
@@ -39,9 +50,11 @@ const handleDownloadExcel = async () => {
     const blob = await res.blob();
     const url = window.URL.createObjectURL(blob);
 
+    const today = getTodayYYYYMMDD();
+
     const a = document.createElement("a");
     a.href = url;
-    a.download = "laneige_daily_report.md"; // 저장될 파일명
+    a.download = `laneige_daily_report_${today}.md`;
     document.body.appendChild(a);
     a.click();
 
@@ -49,7 +62,7 @@ const handleDownloadExcel = async () => {
     window.URL.revokeObjectURL(url);
   } catch (e) {
     console.error(e);
-    alert("엑셀 다운로드 중 오류가 발생했습니다.");
+    alert("리포트 다운로드 중 오류가 발생했습니다.");
   }
 };
 
@@ -82,7 +95,10 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
         })}
       </nav>
       <footer className="sidebar__footer">
-        <button onClick={handleDownloadExcel} className="sidebar__footer-item">
+        <button
+          onClick={handleDownloadMarkdown}
+          className="sidebar__footer-item"
+        >
           <Download className="sidebar__footer-icon" />
           <span>오늘의 리포트 저장</span>
         </button>
