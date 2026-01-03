@@ -40,6 +40,25 @@ const suggestedQuestions = [
   "다음 분기 전략을 제안해 주세요.",
 ];
 
+const AMAZON_CATEGORIES = {
+  all_beauty: "전체",
+  lip_care: "립 케어",
+  skin_care: "스킨 케어",
+  lip_makeup: "립 메이크업",
+  face_powder: "페이스 파우더",
+} as const;
+export type AmazonCategory = keyof typeof AMAZON_CATEGORIES;
+
+const categoryBestsellerData: AISelectableData[] = (
+  Object.entries(AMAZON_CATEGORIES) as [AmazonCategory, string][]
+).map(([category, label]) => ({
+  id: `amazon-ranking-table-${category}`,
+  title: `아마존 ${label} 베스트셀러 순위`,
+  page: "ranking",
+  type: "table",
+  fetchContext: async () => await fetchAmazonBestSellerAIContext(category),
+}));
+
 const allAvailableData: AISelectableData[] = [
   {
     id: "dashboard-stat-sales",
@@ -71,6 +90,7 @@ const allAvailableData: AISelectableData[] = [
     type: "stat",
     fetchContext: async () => await fetchRisingProductItemAIContext("2026-01"),
   },
+  ...categoryBestsellerData,
 ];
 
 /* ================= Helpers ================= */

@@ -10,7 +10,7 @@
    실시간 아마존 현재 순위
 ===================== */
 .ranking-card {
-  border: 1px solid #C4C4C4;
+  border: 1px solid #c4c4c4;
   border-radius: 50px;
   margin-bottom: 32px;
   padding: 1.8rem 3rem;
@@ -48,8 +48,8 @@
   font-size: 16px;
   font-weight: 400;
   border-radius: 50px;
-  border: 1px solid #C4C4C4;
-  color: #7A7A7A;
+  border: 1px solid #c4c4c4;
+  color: #7a7a7a;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -80,7 +80,7 @@
   left: 13px;
   width: 20px;
   height: 20px;
-  color: #7A7A7A;
+  color: #7a7a7a;
 }
 
 .ranking-card__search-input {
@@ -95,7 +95,7 @@
 }
 
 .ranking-card__search-input::placeholder {
-  color: #7A7A7A;
+  color: #7a7a7a;
 }
 
 /* =====================
@@ -119,7 +119,7 @@
 }
 
 .ranking-table thead tr {
-  background: #F1F5FF;
+  background: #f1f5ff;
 }
 
 /* th 공통 */
@@ -127,11 +127,11 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 20px 30px;
+  padding: 15px 30px;
   font-size: 16px;
   font-weight: 500;
-  color: #6691FF;
-  background: #EEF3FF;
+  color: #6691ff;
+  background: #eef3ff;
 }
 
 /* 좌측/우측 모서리만 둥글게 */
@@ -148,14 +148,14 @@
 /* 기본 row */
 .ranking-table__row {
   background: #ffffff;
-  box-shadow: 0px 2px 5px 0px #8888881A;
+  box-shadow: 0px 2px 5px 0px #8888881a;
   border-radius: 50px;
 }
 
 /* LANEIGE 강조 row */
 .ranking-table__row--laneige {
-  background: linear-gradient(186.54deg, #FFFFFF -16.85%, #F1F5FF 105.01%);
-  box-shadow: 0px 2px 5px 0px #8888881A;
+  background: linear-gradient(186.54deg, #ffffff -16.85%, #f1f5ff 105.01%);
+  box-shadow: 0px 2px 5px 0px #8888881a;
 }
 
 /* td 공통 */
@@ -202,25 +202,26 @@
   padding-left: 24px;
 }
 
-/* 제품명 셀 내부 스크롤 영역 */
 .ranking-product-name {
+  padding: 20px 30px;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: 95%;
   display: block;
-  /* max-height: 44px;      2줄 */
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  line-height: 1.4;
-  white-space: normal;
-  word-break: break-word;
 }
 
+.ranking-product-name.is-laneige {
+  color: #6691ff; /* 예: 라네즈 블루 */
+  font-weight: 500;
+}
 
 /* 순위 뱃지 */
 .ranking-badge {
   width: 35px;
   height: 35px;
   border-radius: 999px;
-  background: #9C9C9C;
+  background: #9c9c9c;
   color: #ffffff;
   display: inline-flex;
   align-items: center;
@@ -235,18 +236,15 @@
 
 .ranking-table__row--laneige td:nth-child(2),
 .ranking-table__row--laneige td:nth-child(3) {
-  color: #6691FF;
+  color: #6691ff;
   font-weight: 500;
 }
 
 /* =========================
    이전 순위, 순위 변동
 ========================= */
-/* =========================
-   Previous Rank
-========================= */
 .ranking-table__row--laneige .prev-rank {
-  color: #6691FF;
+  color: #6691ff;
 }
 
 .rank-up {
@@ -255,7 +253,7 @@
   gap: 4px;
   font-size: 16px;
   font-weight: 500;
-  color: #13C85E;
+  color: #13c85e;
 }
 
 .rank-down {
@@ -264,7 +262,7 @@
   gap: 4px;
   font-size: 16px;
   font-weight: 500;
-  color: #FF2F36;
+  color: #ff2f36;
 }
 
 .rank-neutral {
@@ -303,7 +301,7 @@
   width: 100%;
   padding: 12px 16px 12px 50px;
   border-radius: 999px;
-  border: 1px solid #C4C4C4;
+  border: 1px solid #c4c4c4;
   font-size: 16px;
   font-weight: 400;
 }
@@ -315,12 +313,12 @@
   left: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #7A7A7A;
+  color: #7a7a7a;
 }
 
 /* 카테고리 선택 */
 .ranking-chart__category,
-.ranking-chart__period{
+.ranking-chart__period {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
@@ -332,8 +330,8 @@
   font-size: 16px;
   font-weight: 400;
   border-radius: 50px;
-  border: 1px solid #C4C4C4;
-  color: #7A7A7A;
+  border: 1px solid #c4c4c4;
+  color: #7a7a7a;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -356,6 +354,7 @@
   gap: 16px;
   overflow-x: auto;
   padding: 8px 48px;
+  padding-left: 0px;
   scroll-behavior: smooth;
   padding-bottom: 25px;
   margin-bottom: 30px;
@@ -365,7 +364,7 @@
   flex: 0 0 200px;
   height: 280px;
   border-radius: 40px;
-  border: 1px solid #C4C4C4;
+  border: 1px solid #c4c4c4;
   background: #fff;
   padding: 15px 15px;
   padding-top: 0px;
@@ -376,9 +375,14 @@
 }
 
 .product-card--active {
-  border-color: #C1D2FF;
-  background: linear-gradient(179.82deg, #FCFDFF 50.25%, #FFFFFF 79.88%, #F1F6FF 99.87%);
-  box-shadow: 0px 0px 10px 0px #94B2FF1A;
+  border-color: #c1d2ff;
+  background: linear-gradient(
+    179.82deg,
+    #fcfdff 50.25%,
+    #ffffff 79.88%,
+    #f1f6ff 99.87%
+  );
+  box-shadow: 0px 0px 10px 0px #94b2ff1a;
 }
 
 .product-card img {
@@ -407,6 +411,24 @@
   color: #a3a3a3;
   text-align: left;
   z-index: 2;
+}
+
+.ranking-chart__legend {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.legend-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #bbb;
+  font-size: 14px;
+}
+
+.legend-btn.is-active {
+  color: #6691ff;
 }
 
 /* rank badge */
@@ -458,48 +480,80 @@
 
 /* 선택한 제품 정보 */
 .ranking-chart__product-info {
-  margin-bottom: 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
 }
 
 .ranking-chart__product-info h3 {
   font-size: 25px;
   font-weight: 500;
-  color: #383838;
+  color: #252525;
 }
 
-.ranking-chart__product-info p {
-  font-size: 16px;
+.ranking-chart__product-style {
+  font-size: 25px;
   font-weight: 400;
-  color: #7A7A7A;
+  color: #7a7a7a;
+}
+
+.ranking-chart__product-period {
+  font-size: 18px;
+  font-weight: 400;
+  color: #7a7a7a;
+  margin-bottom: 14px;
+}
+
+.category-labels {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.category-labels button {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #c1d2ff;
+  color: #383838;
+  background: linear-gradient(
+    179.82deg,
+    #fcfdff 50.25%,
+    #ffffff 79.88%,
+    #f1f6ff 99.87%
+  );
+
+  transition: all 0.2s ease;
 }
 
 /* 툴팁 */
 .ranking-tooltip {
   background: #ffffff;
-  border: 0.65px solid #6691FF;
+  border: 0.65px solid #6691ff;
   border-radius: 32px;
   padding: 15px 28px;
-  box-shadow: 0px 0px 5px 0px #6691FF80;
+  box-shadow: 0px 0px 5px 0px #6691ff80;
 }
 
 .ranking-tooltip__date {
-  font-weight: 500;
+  font-weight: 400;
   color: #383838;
-  font-size: 16px;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.ranking-tooltip__category {
   font-weight: 500;
-  margin-bottom: 6px;
-}
-
-.ranking-tooltip__row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 16px;
-}
-
-.ranking-tooltip__row.is-overall {
   color: #6691ff;
+  font-size: 14px;
 }
 
-.ranking-tooltip__row.is-category {
-  color: #9bb3ff;
+.ranking-tooltip__rank {
+  font-weight: 500;
+  color: #6691ff;
+  font-size: 14px;
 }

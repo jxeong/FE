@@ -30,6 +30,7 @@ export async function fetchCurrentRanking(categoryId: number) {
 
 // [2] 아마존 라네즈 제품 리스트 조회
 export interface LaneigeProductRaw {
+  product_id: number;
   image_url: string;
   product_name: string;
   style: string;
@@ -40,6 +41,7 @@ export interface LaneigeProductRaw {
 }
 
 export interface LaneigeProductUI {
+  productId: number;
   name: string;
   style: string;
   imageUrl: string;
@@ -83,6 +85,7 @@ export function mapLaneigeProductToUI(
   raw: LaneigeProductRaw
 ): LaneigeProductUI {
   return {
+    productId: raw.product_id,
     name: normalizeProductName(raw.product_name),
     imageUrl: raw.image_url,
     style: raw.style,
@@ -93,3 +96,65 @@ export function mapLaneigeProductToUI(
   };
 }
 
+// [3] 라네즈 제품 순위 정보 조회 API
+export type RankRange = "WEEK" | "MONTH" | "YEAR";
+
+export interface RankTrendItem {
+  bucket: string;
+  rank1: number | null;
+  rank1_category: string | null;
+  rank2: number | null;
+  rank2_category: string | null;
+}
+
+export interface RankChartPoint {
+  date: string;
+
+  overallRank?: number;
+  overallCategory?: string;
+
+  categoryRank?: number;
+  categoryCategory?: string;
+}
+
+
+export interface RankTrendApiResponse {
+  product_id: number;
+  range: RankRange;
+  items: RankTrendItem[];
+}
+
+export async function fetchProductRankTrends(
+  productId: number,
+  range: RankRange
+): Promise<RankTrendApiResponse> {
+  const res = await fetch(
+    `${API_BASE_URL}/api/laneige/products/${productId}/rank-trends?range=${range}`
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch product rank trends");
+  }
+
+  return res.json();
+}
+
+export interface RankChartPoint {
+  date: string;
+  overallRank?: number;
+  categoryRank?: number;
+}
+
+export function mapRankTrendsToChartData(
+  response: RankTrendApiResponse
+): RankChartPoint[] {
+  return response.items.map((item) => ({
+    date: item.bucket,
+
+    overallRank: item.rank1 ?? undefined,
+    overallCategory: item.rank1_category ?? undefined,
+
+    categoryRank: item.rank2 ?? undefined,
+    categoryCategory: item.rank2_category ?? undefined,
+  }));
+}

@@ -10,19 +10,19 @@ import {
   Legend,
 } from "recharts";
 import {
-  TrendingUp,
-  TrendingDown,
-  Clock,
   Search,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
 import { AddToCartButton } from "./AddToCartButton";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import type { TooltipProps } from "recharts";
 import type { InsightItem } from "../App";
 import "../styles/RankingHistory.css";
 import { fetchCurrentRanking, fetchCurrentProducts } from "../api/rankings";
+import {
+  fetchProductRankTrends,
+  mapRankTrendsToChartData,
+} from "../api/rankings";
 
 export const CATEGORY_MAP = {
   all_beauty: 1,
@@ -33,28 +33,57 @@ export const CATEGORY_MAP = {
 } as const;
 export type CategoryCode = keyof typeof CATEGORY_MAP;
 
+export const RANK_RANGE = {
+  WEEK: "WEEK",
+  MONTH: "MONTH",
+  YEAR: "YEAR",
+} as const;
+
+export type RankRange = (typeof RANK_RANGE)[keyof typeof RANK_RANGE];
+
+function formatXAxisDate(dateStr: string, period: PeriodType) {
+  const date = new Date(dateStr);
+
+  const year = String(date.getFullYear()).slice(2); // 25
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  if (period === "yearly") {
+    return `${year}/${month}`; // 25/01
+  }
+
+  return `${month}/${day}`; // 12/31
+}
+
 function RankingTooltip({
   active,
   payload,
   label,
-}: TooltipProps<number, string>) {
+  period,
+}: TooltipProps<number, string> & { period: PeriodType }) {
   if (!active || !payload || payload.length === 0) return null;
+
+  const data = payload[0].payload;
 
   return (
     <div className="ranking-tooltip">
-      <div className="ranking-tooltip__date">{label}</div>
+      <div className="ranking-tooltip__date">
+        {formatXAxisDate(String(label), period)}
+      </div>
 
-      {payload.map((item) => (
-        <div
-          key={item.dataKey as string}
-          className={`ranking-tooltip__row ${
-            item.dataKey === "overall_rank" ? "is-overall" : "is-category"
-          }`}
-        >
-          <span className="ranking-tooltip__label">{item.name}:</span>
-          <span className="ranking-tooltip__value">{item.value}위</span>
+      {payload[0].dataKey === "overallRank" && (
+        <div>
+          <div className="ranking-tooltip__category">{data.overallCategory}</div>
+          <div className="ranking-tooltip__rank">{data.overallRank}위</div>
         </div>
-      ))}
+      )}
+
+      {payload[0].dataKey === "categoryRank" && (
+        <div>
+          <div className="ranking-tooltip__category">{data.categoryCategory}</div>
+          <div className="ranking-tooltip__rank">{data.categoryRank}위</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -72,36 +101,6 @@ const periodConfigs = {
   weekly: { label: "이번 주", points: 7 },
   monthly: { label: "이번 달", points: 30 },
   yearly: { label: "올해", points: 12 },
-};
-
-/* =======================
-   Utils
-======================= */
-
-const generateRankingData = (
-  period: PeriodType,
-  product: LaneigeProductUI | undefined
-) => {
-  if (!product) return [];
-
-  const points = periodConfigs[period].points;
-  const now = new Date();
-
-  const baseRank = product.rank1;
-
-  const data: any[] = [];
-
-  for (let i = points - 1; i >= 0; i--) {
-    const date = new Date(now);
-    date.setDate(date.getDate() - i);
-
-    data.push({
-      date: `${date.getMonth() + 1}/${date.getDate()}`,
-      rank: Math.max(1, baseRank + Math.floor(Math.sin(i / 3) * 3)),
-    });
-  }
-
-  return data;
 };
 
 /* =======================
@@ -125,7 +124,6 @@ export function RankingHistory({
 }: RankingHistoryProps) {
   const [selectedCategory, setSelectedCategory] =
     useState<CategoryType>("all_beauty");
-  const categoryId = CATEGORY_MAP[selectedCategory];
 
   // 순위 데이터 상태
   type RankingItem = {
@@ -139,6 +137,8 @@ export function RankingHistory({
   const [rankings, setRankings] = useState<RankingItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<LaneigeProductUI[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [chartLoading, setChartLoading] = useState(false);
 
   const categoryConfigs: Record<CategoryType, { label: string }> = {
     all_beauty: { label: "전체" },
@@ -154,13 +154,12 @@ export function RankingHistory({
   const [searchTerm, setSearchTerm] = useState("");
   const [productSearchTerm, setProductSearchTerm] = useState<string>("");
 
-  const [selectedProduct, setSelectedProduct] = useState<string>("");
+  const [selectedProduct, setSelectedProduct] = useState<number | null>(null);
 
   useEffect(() => {
     if (products.length > 0 && !selectedProduct) {
-      setSelectedProduct(products[0].name);
+      setSelectedProduct(products[0].productId);
     }
-    console.log("products:", products);
   }, [products, selectedProduct]);
 
   const [period, setPeriod] = useState<PeriodType>("weekly");
@@ -173,13 +172,31 @@ export function RankingHistory({
           p.name.toLowerCase().includes(productSearchTerm.trim().toLowerCase())
         );
 
-  const selectedProductData = products.find((p) => p.name === selectedProduct);
+  const selectedProductData = products.find(
+    (p) => p.productId === selectedProduct
+  );
+  const selectedProductId = selectedProduct;
+  const selectedProductName = selectedProductData?.name || "";
+  const selectedProductStyle = selectedProductData?.style || "";
+  const PERIOD_TO_RANGE_MAP: Record<PeriodType, RankRange> = {
+    weekly: RANK_RANGE.WEEK,
+    monthly: RANK_RANGE.MONTH,
+    yearly: RANK_RANGE.YEAR,
+  };
 
-  const chartData = generateRankingData(period, selectedProductData);
+  const filteredRankings =
+    searchTerm.trim() === ""
+      ? rankings
+      : rankings.filter((item) => {
+          const q = searchTerm.trim().toLowerCase();
+          const name = item.product_name.toLowerCase();
+          const brand = item.product_name.split(" ")[0]?.toLowerCase() ?? "";
+          return name.includes(q) || brand.includes(q);
+        });
 
-  // const categoryKeys = selectedProductData
-  //   ? (Object.keys(selectedProductData.categories) as CategoryType[])
-  //   : [];
+  type RankViewType = "rank1" | "rank2";
+
+  const [activeRank, setActiveRank] = useState<RankViewType>("rank1");
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
@@ -218,6 +235,31 @@ export function RankingHistory({
     loadProducts();
   }, []);
 
+  useEffect(() => {
+    if (!selectedProductId) return;
+
+    async function loadRankTrends() {
+      try {
+        setChartLoading(true);
+
+        const range = PERIOD_TO_RANGE_MAP[period];
+
+        const res = await fetchProductRankTrends(selectedProductId, range);
+        console.log("내가 넘긴 데이터:", selectedProductId, range);
+        console.log("랭크 추이 선택:", res);
+        const mapped = mapRankTrendsToChartData(res);
+        setChartData(mapped);
+      } catch (e) {
+        console.error("랭크 추이 로드 실패", e);
+        setChartData([]);
+      } finally {
+        setChartLoading(false);
+      }
+    }
+
+    loadRankTrends();
+  }, [selectedProductId, period]);
+
   const handleScroll = (dir: "left" | "right") => {
     const el = document.getElementById("ranking-product-scroll");
     if (!el) return;
@@ -226,6 +268,26 @@ export function RankingHistory({
     const next = Math.max(0, scrollX + delta);
     el.scrollTo({ left: next, behavior: "smooth" });
     setScrollX(next);
+  };
+
+  const rankingTableKey = `amazon-ranking-table-${selectedCategory}`;
+  const latestPoint = chartData[chartData.length - 1];
+
+  const ActiveDot = (props: any) => {
+    const { cx, cy, value } = props;
+    if (value == null) return null;
+
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={6}
+        fill="#6691ff"
+        stroke="#ffffff"
+        strokeWidth={2}
+        filter="url(#dotShadow)"
+      />
+    );
   };
 
   return (
@@ -273,11 +335,11 @@ export function RankingHistory({
                   title: `아마존 ${categoryConfigs[selectedCategory].label} 베스트셀러 순위`,
                   data: null,
                   page: "ranking",
-                  uniqueKey: tableKey,
+                  uniqueKey: rankingTableKey,
                 })
               }
-              onRemove={() => removeByUniqueKey(tableKey)}
-              isInCart={isInCart(tableKey)}
+              onRemove={() => removeByUniqueKey(rankingTableKey)}
+              isInCart={isInCart(rankingTableKey)}
             />
           </div>
         </header>
@@ -286,7 +348,7 @@ export function RankingHistory({
           <table className="ranking-table">
             <colgroup>
               <col style={{ width: "110px" }} /> {/* 순위 */}
-              <col style={{ width: "140px" }} /> {/* 브랜드 */}
+              <col style={{ width: "150px" }} /> {/* 브랜드 */}
               <col style={{ width: "auto" }} /> {/* 제품명 */}
               <col style={{ width: "130px" }} /> {/* 이전 순위 */}
               <col style={{ width: "130px" }} /> {/* 변동 */}
@@ -306,7 +368,7 @@ export function RankingHistory({
                   <td colSpan={5}>로딩 중...</td>
                 </tr>
               ) : (
-                rankings.slice(0, 30).map((item) => (
+                filteredRankings.slice(0, 30).map((item) => (
                   <tr
                     key={item.rank}
                     className={`ranking-table__row ${
@@ -326,7 +388,11 @@ export function RankingHistory({
                     {/* 브랜드 정보 없음 */}
                     <td>{item.product_name.split(" ")[0]}</td>
 
-                    <div className="ranking-product-name">
+                    <div
+                      className={`ranking-product-name ${
+                        item.is_laneige ? "is-laneige" : ""
+                      }`}
+                    >
                       {item.product_name}
                     </div>
 
@@ -338,7 +404,7 @@ export function RankingHistory({
                       )}
                       {item.rank_change < 0 && (
                         <span className="rank-down">
-                          ▼ {Math.abs(item.rank_change)}
+                          ▼ -{Math.abs(item.rank_change)}
                         </span>
                       )}
                       {item.rank_change === 0 && (
@@ -363,7 +429,7 @@ export function RankingHistory({
             onAdd={() =>
               addToCart({
                 type: "chart",
-                title: `${periodConfigs[period].label} ${selectedProduct} 순위 추이`,
+                title: `${periodConfigs[period].label} ${selectedProductName} 순위 추이`,
                 data: chartData,
                 page: "ranking",
                 uniqueKey: `ranking-chart-${selectedProduct}-${period}`,
@@ -413,17 +479,13 @@ export function RankingHistory({
           <div id="ranking-product-scroll" className="product-scroll">
             {filteredProducts.map((p) => (
               <button
-                key={p.name}
+                key={p.productId}
                 className={`product-card ${
-                  selectedProduct === `${p.name}-${p.style}`
-                    ? "product-card--active"
-                    : ""
+                  selectedProduct === p.productId ? "product-card--active" : ""
                 }`}
-                onClick={() => setSelectedProduct(`${p.name}-${p.style}`)}
+                onClick={() => setSelectedProduct(p.productId)}
               >
-                {/* <span className="product-card__rank">
-                  #{p.categories.overall}
-                </span> */}
+                <span className="product-card__rank">#{p.productId}</span>
 
                 <ImageWithFallback
                   src={p.imageUrl}
@@ -447,14 +509,60 @@ export function RankingHistory({
 
         {/* ===== Selected Product Info ===== */}
         <div className="ranking-chart__product-info">
-          <h3>{selectedProduct}</h3>
-          <p>{periodConfigs[period].label} 순위 변동</p>
+          <h3 className="ranking-chart__product-name">{selectedProductName}</h3>
+          <p className="ranking-chart__product-style">
+            - {selectedProductStyle}
+          </p>
+        </div>
+        <p className="ranking-chart__product-period">
+          {periodConfigs[period].label} 순위 변동
+        </p>
+
+        <div className="category-labels">
+          <button
+            className={`legend-btn ${
+              activeRank === "rank1" ? "is-active" : ""
+            }`}
+            onClick={() => setActiveRank("rank1")}
+          >
+            {latestPoint?.overallCategory} {latestPoint?.overallRank}위
+          </button>
+
+          <button
+            className={`legend-btn ${
+              activeRank === "rank2" ? "is-active" : ""
+            }`}
+            onClick={() => setActiveRank("rank2")}
+          >
+            {latestPoint?.categoryCategory} {latestPoint?.categoryRank}위
+          </button>
         </div>
 
         {/* ===== Chart ===== */}
         <div className="ranking-chart">
           <ResponsiveContainer width="100%" height={360}>
-            <LineChart data={chartData}>
+            <LineChart
+              data={chartData}
+              margin={{ top: 20, right: 24, bottom: 16 }}
+            >
+              <defs>
+                <filter
+                  id="dotShadow"
+                  x="-100%"
+                  y="-100%"
+                  width="300%"
+                  height="300%"
+                >
+                  <feDropShadow
+                    dx="0"
+                    dy="0"
+                    stdDeviation="5"
+                    floodColor="#6691FF"
+                    floodOpacity="1"
+                  />
+                </filter>
+              </defs>
+
               <CartesianGrid
                 horizontal={true}
                 vertical={false}
@@ -463,38 +571,53 @@ export function RankingHistory({
               />
               <XAxis
                 dataKey="date"
+                tickFormatter={(value) => formatXAxisDate(value, period)}
                 tick={{ fill: "#C4C4C4" }}
                 axisLine={{ stroke: "#C4C4C4" }}
                 tickLine={false}
                 tickMargin={12}
               />
               <YAxis
+                domain={([dataMin, dataMax]) => {
+                  // 값이 하나뿐일 때 (ex: 8 → 8)
+                  if (dataMin === dataMax) {
+                    return [dataMin - 1, dataMax + 1];
+                  }
+
+                  // 값 차이가 있을 때 (ex: 1493 → 1490)
+                  const padding = Math.max(
+                    1,
+                    Math.floor((dataMax - dataMin) * 0.2)
+                  );
+
+                  return [Math.max(1, dataMin - padding), dataMax + padding];
+                }}
+                allowDecimals={false}
                 tick={{ fill: "#C4C4C4" }}
                 axisLine={false}
                 tickLine={false}
+                reversed={true}
               />
-              <Tooltip
-                content={<RankingTooltip />}
-                cursor={{ stroke: "#c7d4ff", strokeWidth: 1 }}
-              />
-              <Legend
-                verticalAlign="top"
-                align="right"
-                wrapperStyle={{ top: -10 }}
-              />
+              <Tooltip content={<RankingTooltip period={period}/>} cursor={false} />
 
-              {/* {categoryKeys.map((cat, i) => (
-                <Line
-                  key={cat}
-                  type="monotone"
-                  dataKey={`${cat}_rank`}
-                  name={categoryConfigs[cat].label}
-                  stroke={i === 0 ? "#6691ff" : "#C1D2FF"}
-                  fill={i === 0 ? "#6691ff" : "#C1D2FF"}
-                  strokeWidth={2}
-                  dot={{ r: 4 }}
-                />
-              ))} */}
+              <Line
+                type="monotone"
+                dataKey={
+                  activeRank === "rank1" ? "overallRank" : "categoryRank"
+                }
+                stroke="#6691ff"
+                strokeWidth={2}
+                dot={{
+                  r: 4,
+                  fill: "#6691ff",
+                  stroke: "none",
+                }}
+                activeDot={<ActiveDot />}
+                connectNulls
+                isAnimationActive={true}
+                animationDuration={600}
+                animationEasing="ease-in-out"
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
