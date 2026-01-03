@@ -20,12 +20,30 @@ import {
 
 /* ================= Types ================= */
 
+// 도라 - 리포트 생성용 payload 저장 구조
+
+type ChatPayload = {
+  messages: ChatMessageForAPI[];
+};
+
+type GenerateReportResponse = {
+  report_id: string;
+  body_md: string;
+  title?: string;
+};
+
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
   attachedData?: string[];
+  //도라
+  // 이 답변 밑에 '리포트 생성' 버튼을 띄울지
+  canGenerateReport?: boolean;
+
+  // 버튼 눌렀을 때 다시 보낼 payload
+  reportPayload?: ChatPayload;
 }
 
 type AISelectableData = {
@@ -151,6 +169,39 @@ const allAvailableData: AISelectableData[] = [
 ];
 
 /* ================= Helpers ================= */
+// 도라 저장
+function downloadMarkdown(params: { filename: string; content: string }) {
+  const { filename, content } = params;
+
+  const blob = new Blob([content], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.endsWith(".md") ? filename : `${filename}.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+}
+// 도라 api 함수 추가
+async function callGenerateReportAPI(
+  payload: ChatPayload
+): Promise<GenerateReportResponse> {
+  const res = await fetch("https://boradora.store/api/report/custom", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || "Report API Error");
+  }
+
+  return (await res.json()) as GenerateReportResponse;
+}
 
 async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
   const res = await fetch("https://boradora.store/api/chat", {
@@ -266,7 +317,6 @@ function mapRankingTrendToAILines(params: {
 }
 
 /* ================= Component ================= */
-
 export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   const pocketChartData: AISelectableData[] = cartItems
     .filter((item) => item.type === "chart" && item.page === "ranking")
@@ -313,6 +363,10 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
+  //도라 추가
+  const [generatingReportFor, setGeneratingReportFor] = useState<string | null>(
+    null
+  );
 
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -326,6 +380,41 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   }, [messages]);
 
   /* ================= Send ================= */
+  // 도라 - 버튼 클릭 핸들러 추가
+  const handleGenerateReport = async (msg: Message) => {
+    if (!msg.reportPayload) return;
+
+    try {
+      setGeneratingReportFor(msg.id);
+
+      const res = await callGenerateReportAPI(msg.reportPayload);
+
+      const title = (res.title?.trim() || "laneige_report").replace(
+        /[\\/:*?"<>|]/g,
+        "-"
+      ); // 윈도우 파일명 금지문자 치환
+      const filename = `${title}_${res.report_id}.md`;
+
+      downloadMarkdown({
+        filename,
+        content: res.body_md ?? "",
+      });
+    } catch (e: any) {
+      const errMsg = e?.message ?? "Unknown error";
+      // 에러는 채팅에 띄우거나, 토스트로 띄우거나 선택
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-report-error`,
+          role: "assistant",
+          content: `리포트 생성 중 에러: ${errMsg}`,
+          timestamp: new Date(),
+        },
+      ]);
+    } finally {
+      setGeneratingReportFor(null);
+    }
+  };
 
   const handleSend = async (text = input) => {
     if (!text.trim() && selectedData.length === 0) return;
@@ -393,15 +482,26 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
       );
       console.groupEnd();
 
-      const reply = await callChatAPI({
+      const finalPayload: ChatPayload = {
         messages: [...historyForAPI, userMessageForAPI],
-      });
+      };
+
+      const reply = await callChatAPI(finalPayload);
+
+      const canGenerate = (attachedDataForAPI?.length ?? 0) > 0;
 
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: reply,
         timestamp: new Date(),
+        attachedData: attachedDataTitles.length
+          ? attachedDataTitles
+          : undefined,
+        // 버튼 표시 여부
+        canGenerateReport: canGenerate,
+        // 버튼 눌렀을 때 재사용할 payload
+        reportPayload: canGenerate ? finalPayload : undefined,
       };
 
       setMessages((prev) => [...prev, aiResponse]);
@@ -479,6 +579,20 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
                   })}
                 </time>
               </div>
+              {msg.role === "assistant" &&
+                msg.canGenerateReport &&
+                msg.reportPayload && (
+                  <button
+                    type="button"
+                    className="ai-report-btn"
+                    onClick={() => handleGenerateReport(msg)}
+                    disabled={generatingReportFor === msg.id}
+                  >
+                    {generatingReportFor === msg.id
+                      ? "리포트 생성 중..."
+                      : "리포트 생성"}
+                  </button>
+                )}
             </div>
           </div>
         ))}

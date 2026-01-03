@@ -406,3 +406,19 @@
   cursor: pointer;
   line-height: 1;
 }
+
+.ai-report-btn {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid #8babff;
+  background: #f1f5ff;
+  color: #6691ff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ai-report-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
