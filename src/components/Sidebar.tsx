@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import type { PageType } from "../App";
 import "../styles/Sidebar.css";
-import laneigeLogo from "../assets/laneigeLogo.png";
+import laneigeLogo from "../assets/laneigeLogo.svg";
 import { Download } from "lucide-react";
 import { API_BASE_URL } from "../config/api";
 
