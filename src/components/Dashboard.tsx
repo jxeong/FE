@@ -31,6 +31,8 @@ import { API_BASE_URL } from "../config/api";
 // API
 import {
   fetchTop5Bestsellers,
+  mapTop5Rows,
+  mapProductDetail,
   fetchTop1BestSeller,
   fetchRisingProduct,
 } from "../api/dashboard";
@@ -47,16 +49,16 @@ interface DashboardProps {
 }
 
 const salesData = [
-  { date: "11/22", sales: 3800 },
-  { date: "11/23", sales: 4200 },
-  { date: "11/24", sales: 3900 },
-  { date: "11/25", sales: 5100 },
-  { date: "11/26", sales: 4600 },
-  { date: "11/27", sales: 5800 },
-  { date: "11/28", sales: 6200 },
-  { date: "11/29", sales: 5900 },
-  { date: "11/30", sales: 6500 },
-  { date: "12/01", sales: 5800 },
+  { date: "12/22", sales: 3800 },
+  { date: "12/23", sales: 4200 },
+  { date: "12/24", sales: 3900 },
+  { date: "12/25", sales: 5100 },
+  { date: "12/26", sales: 4600 },
+  { date: "12/27", sales: 5800 },
+  { date: "12/28", sales: 6200 },
+  { date: "12/29", sales: 5900 },
+  { date: "12/30", sales: 6500 },
+  { date: "12/31", sales: 8500 },
 ];
 
 function CustomTooltip({ activePoint }: any) {
@@ -98,26 +100,6 @@ export function Dashboard({
     value: number;
   } | null>(null);
 
-  function mapTop5(raw: BestSellerItemRaw[]): BestSellerTop5Row[] {
-    return raw.map((item) => ({
-      rank: item.rank,
-      name: item.product_name,
-      sales: item.last_month_sales,
-      rating: item.rating,
-      reviews: item.review_count,
-    }));
-  }
-
-  function mapProductDetail(raw: BestSellerItemRaw[]): ProductDetailRow[] {
-    return raw.map((item) => ({
-      rank: item.rank,
-      name: item.product_name,
-      sales: item.last_month_sales,
-      prevRank: item.prev_month_rank,
-      rankChange: item.rank_change,
-    }));
-  }
-
   const [top5Rows, setTop5Rows] = useState<BestSellerTop5Row[]>([]);
   const [top1Product, setTop1Product] = useState<Top1BestSellerItemRaw | null>(
     null
@@ -136,31 +118,30 @@ export function Dashboard({
     async function load() {
       try {
         const res = await fetchTop5Bestsellers(month);
-        setTop5Rows(mapTop5(res.items));
+        setTop5Rows(mapTop5Rows(res.items));
       } finally {
         setLoading(false);
       }
     }
 
     load();
-  }, []);
+  }, [month]);
 
   // [2] 제품별 상세 현황 데이터 로드
   useEffect(() => {
-    async function load() {
-      try {
-        const month = getCurrentMonth();
-        const res = await fetchTop5Bestsellers(month);
+  async function load() {
+    try {
+      const res = await fetchTop5Bestsellers(month);
 
-        setTop5Rows(mapTop5(res.items));
-        setDetailRows(mapProductDetail(res.items));
-      } finally {
-        setLoading(false);
-      }
+      setTop5Rows(mapTop5Rows(res.items));
+      setDetailRows(mapProductDetail(res.items));
+    } finally {
+      setLoading(false);
     }
+  }
 
-    load();
-  }, []);
+  load();
+}, [month]);
 
   // [3] 매출 1위 제품 데이터 로드
   useEffect(() => {
@@ -193,9 +174,7 @@ export function Dashboard({
   useEffect(() => {
     const fetchTodayInsight = async () => {
       try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/reports/today/insight`
-        );
+        const res = await fetch(`${API_BASE_URL}/api/reports/today/insight`);
 
         if (!res.ok) {
           throw new Error("Failed to fetch today insight");

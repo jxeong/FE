@@ -1,7 +1,9 @@
 // src/api/dashboard.ts
 import { API_BASE_URL } from "../config/api";
 
-// [1] Dash-베스트셀러 top5 목록
+/* =====================
+   Raw API Types
+===================== */
 export interface BestSellerItemRaw {
   rank: number;
   product_id: number;
@@ -20,6 +22,46 @@ export interface BestSellerTop5ApiResponse {
   items: BestSellerItemRaw[];
 }
 
+/* =====================
+   Normalization Utils
+===================== */
+function normalizeProductName(name: string): string {
+  return name
+    .split(/[-–:+]/)[0]
+    .replace(/^laneige\s+/i, "")
+    .trim();
+}
+
+/* =====================
+   Base Normalized Model
+===================== */
+interface NormalizedBestSeller {
+  rank: number;
+  name: string;
+  sales: number;
+  rating: number;
+  reviews: number;
+  prevRank: number;
+  rankChange: number;
+}
+
+function normalizeBestSellerItem(
+  item: BestSellerItemRaw
+): NormalizedBestSeller {
+  return {
+    rank: item.rank,
+    name: normalizeProductName(item.product_name),
+    sales: item.last_month_sales,
+    rating: item.rating,
+    reviews: item.review_count,
+    prevRank: item.prev_month_rank,
+    rankChange: item.rank_change,
+  };
+}
+
+/* =====================
+   Top5 Table
+===================== */
 export interface BestSellerTop5Row {
   rank: number;
   name: string;
@@ -28,6 +70,50 @@ export interface BestSellerTop5Row {
   reviews: number;
 }
 
+export function mapTop5Rows(
+  raw: BestSellerItemRaw[]
+): BestSellerTop5Row[] {
+  return raw.map((item) => {
+    const n = normalizeBestSellerItem(item);
+    return {
+      rank: n.rank,
+      name: n.name,
+      sales: n.sales,
+      rating: n.rating,
+      reviews: n.reviews,
+    };
+  });
+}
+
+/* =====================
+   Product Detail
+===================== */
+export interface ProductDetailRow {
+  rank: number;
+  name: string;
+  sales: number;
+  prevRank: number;
+  rankChange: number;
+}
+
+export function mapProductDetail(
+  raw: BestSellerItemRaw[]
+): ProductDetailRow[] {
+  return raw.map((item) => {
+    const n = normalizeBestSellerItem(item);
+    return {
+      rank: n.rank,
+      name: n.name,
+      sales: n.sales,
+      prevRank: n.prevRank,
+      rankChange: n.rankChange,
+    };
+  });
+}
+
+/* =====================
+   API
+===================== */
 export async function fetchTop5Bestsellers(month: string) {
   const res = await fetch(
     `${API_BASE_URL}/api/dashboard/bestsellers/top5?month=${month}`
@@ -37,27 +123,9 @@ export async function fetchTop5Bestsellers(month: string) {
     throw new Error("Failed to fetch top5 bestsellers");
   }
 
-  return res.json();
+  return res.json() as Promise<BestSellerTop5ApiResponse>;
 }
 
-// [2] Dash-베스트셀러 top5 세부정보
-export interface ProductDetailRow {
-  rank: number;
-  name: string;
-  sales: number;
-  prevRank: number;
-  rankChange: number;
-}
-
-function mapProductDetail(raw: BestSellerItemRaw[]): ProductDetailRow[] {
-  return raw.map((item) => ({
-    rank: item.rank,
-    name: item.product_name,
-    sales: item.last_month_sales,
-    prevRank: item.prev_month_rank,
-    rankChange: item.rank_change,
-  }));
-}
 
 // [3] 매출 1위 제품
 export interface Top1BestSellerItemRaw {
@@ -74,10 +142,6 @@ export interface Top1BestSellerResponse {
   month: string;
   snapshot_time: string;
   items: Top1BestSellerItemRaw;
-}
-
-function normalizeProductName(name: string): string {
-  return name.split(/[-–:|]/)[0].trim();
 }
 
 export async function fetchTop1BestSeller(month: string) {
@@ -123,11 +187,7 @@ export async function fetchTop1BestSellerAIContext(month: string) {
   const data = await res.json();
 
   const raw =
-    data?.item ??
-    data?.items ??
-    data?.data?.item ??
-    data?.data?.items ??
-    null;
+    data?.item ?? data?.items ?? data?.data?.item ?? data?.data?.items ?? null;
 
   if (!raw) {
     console.error("[Top1 AI] raw is undefined", data);
@@ -143,7 +203,6 @@ export async function fetchTop1BestSellerAIContext(month: string) {
     review_count: raw.review_count,
   };
 }
-
 
 // [4] 급상승  제품
 export interface RisingProductItemRaw {
@@ -203,11 +262,7 @@ export async function fetchRisingProductItemAIContext(month: string) {
   const data = await res.json();
 
   const raw =
-    data?.item ??
-    data?.items ??
-    data?.data?.item ??
-    data?.data?.items ??
-    null;
+    data?.item ?? data?.items ?? data?.data?.item ?? data?.data?.items ?? null;
 
   if (!raw) {
     console.error("[Top1 AI] raw is undefined", data);
