@@ -40,11 +40,11 @@ export function ProductDetailTable({
 }: ProductDetailTableProps) {
   return (
     <TableCard
-      title="베스트 셀러 TOP 5 상세 정보"
+      title="지난 달 베스트 셀러 TOP 5 상세 정보"
       uniqueKey="dashboard-table-product-detail"
       cartPayload={{
         type: "table",
-        title: "베스트 셀러 TOP 5 상세 정보",
+        title: "지난 달 베스트 셀러 TOP 5 상세 정보",
         data,
         page: "dashboard",
         uniqueKey: "dashboard-table-product-detail",

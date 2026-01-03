@@ -9,11 +9,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import {
-  Search,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { AddToCartButton } from "./AddToCartButton";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import type { InsightItem } from "../App";
@@ -38,6 +34,12 @@ export const RANK_RANGE = {
   MONTH: "MONTH",
   YEAR: "YEAR",
 } as const;
+
+export const PERIOD_TO_RANK_RANGE: Record<PeriodType, typeof RANK_RANGE[keyof typeof RANK_RANGE]> = {
+  weekly: RANK_RANGE.WEEK,
+  monthly: RANK_RANGE.MONTH,
+  yearly: RANK_RANGE.YEAR,
+};
 
 export type RankRange = (typeof RANK_RANGE)[keyof typeof RANK_RANGE];
 
@@ -73,14 +75,18 @@ function RankingTooltip({
 
       {payload[0].dataKey === "overallRank" && (
         <div>
-          <div className="ranking-tooltip__category">{data.overallCategory}</div>
+          <div className="ranking-tooltip__category">
+            {data.overallCategory}
+          </div>
           <div className="ranking-tooltip__rank">{data.overallRank}위</div>
         </div>
       )}
 
       {payload[0].dataKey === "categoryRank" && (
         <div>
-          <div className="ranking-tooltip__category">{data.categoryCategory}</div>
+          <div className="ranking-tooltip__category">
+            {data.categoryCategory}
+          </div>
           <div className="ranking-tooltip__rank">{data.categoryRank}위</div>
         </div>
       )}
@@ -433,6 +439,10 @@ export function RankingHistory({
                 data: chartData,
                 page: "ranking",
                 uniqueKey: `ranking-chart-${selectedProduct}-${period}`,
+                meta: {
+                  productId: selectedProductId,
+                  range: PERIOD_TO_RANK_RANGE[period],
+                },
               })
             }
             onRemove={() =>
@@ -598,7 +608,10 @@ export function RankingHistory({
                 tickLine={false}
                 reversed={true}
               />
-              <Tooltip content={<RankingTooltip period={period}/>} cursor={false} />
+              <Tooltip
+                content={<RankingTooltip period={period} />}
+                cursor={false}
+              />
 
               <Line
                 type="monotone"

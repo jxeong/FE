@@ -6,7 +6,17 @@ import type { InsightItem } from "../App";
 import {
   fetchTop1BestSellerAIContext,
   fetchRisingProductItemAIContext,
+  fetchTop5Bestsellers,
+  mapTop5ToAILines,
 } from "../api/dashboard";
+import {
+  fetchCurrentRanking,
+  mapCurrentRankingToAILines,
+  fetchProductRankTrends,
+  mapRankingHistoryToAILines,
+  normalizeRankTrendApiToAI,
+  AMAZON_CATEGORY_ID_MAP,
+} from "../api/rankings";
 
 /* ================= Types ================= */
 
@@ -18,11 +28,6 @@ interface Message {
   attachedData?: string[];
 }
 
-type ChatMessageForAPI = {
-  role: "system" | "user" | "assistant";
-  content: string;
-};
-
 type AISelectableData = {
   id: string;
   title: string;
@@ -31,8 +36,20 @@ type AISelectableData = {
   fetchContext: () => Promise<any>;
 };
 
+type AttachedDataBlock = {
+  title: string;
+  lines: string[];
+};
+
+type ChatMessageForAPI = {
+  role: "user" | "assistant";
+  content: string;
+  attachedData?: AttachedDataBlock[];
+};
+
 /* ================= Static Data ================= */
 
+// 추천 질문
 const suggestedQuestions = [
   "이번 달 매출 트렌드를 분석해주세요.",
   "Water Sleeping Mask의 아마존 순위 변동을 알려주세요.",
@@ -40,6 +57,7 @@ const suggestedQuestions = [
   "다음 분기 전략을 제안해 주세요.",
 ];
 
+// 아마존 베스트셀러 카테고리 매핑
 const AMAZON_CATEGORIES = {
   all_beauty: "전체",
   lip_care: "립 케어",
@@ -49,6 +67,7 @@ const AMAZON_CATEGORIES = {
 } as const;
 export type AmazonCategory = keyof typeof AMAZON_CATEGORIES;
 
+// 아마존 베스트셀러 순위 관련 포맷
 const categoryBestsellerData: AISelectableData[] = (
   Object.entries(AMAZON_CATEGORIES) as [AmazonCategory, string][]
 ).map(([category, label]) => ({
@@ -56,9 +75,17 @@ const categoryBestsellerData: AISelectableData[] = (
   title: `아마존 ${label} 베스트셀러 순위`,
   page: "ranking",
   type: "table",
-  fetchContext: async () => await fetchAmazonBestSellerAIContext(category),
+  fetchContext: async () => {
+    const categoryId = AMAZON_CATEGORY_ID_MAP[category];
+    console.log("category key:", category);
+    console.log("category id:", categoryId);
+    const res = await fetchCurrentRanking(categoryId);
+
+    return mapCurrentRankingToAILines(category, res);
+  },
 }));
 
+// 모달창 선택 데이터
 const allAvailableData: AISelectableData[] = [
   {
     id: "dashboard-stat-sales",
@@ -78,17 +105,47 @@ const allAvailableData: AISelectableData[] = [
   },
   {
     id: "dashboard-product-of-month",
-    title: "이달의 제품",
+    title: "지난 달 매출 1위 제품",
     page: "dashboard",
     type: "stat",
-    fetchContext: async () => await fetchTop1BestSellerAIContext("2026-01"),
+    fetchContext: async () => {
+      const month = getCurrentYearMonth();
+      const res = await fetchTop1BestSellerAIContext(month);
+      return res;
+    },
   },
   {
     id: "dashboard-rising-product",
     title: "급상승한 제품",
     page: "dashboard",
     type: "stat",
-    fetchContext: async () => await fetchRisingProductItemAIContext("2026-01"),
+    fetchContext: async () => {
+      const month = getCurrentYearMonth();
+      const res = await fetchRisingProductItemAIContext(month);
+      return res;
+    },
+  },
+  {
+    id: "dashboard-table-top5",
+    title: "지난 달 베스트셀러 TOP 5",
+    page: "dashboard",
+    type: "table",
+    fetchContext: async () => {
+      const month = getCurrentYearMonth();
+      const res = await fetchTop5Bestsellers(month);
+      return mapTop5ToAILines(res);
+    },
+  },
+  {
+    id: "dashboard-table-product-detail",
+    title: "지난 달 베스트셀러 TOP 5 상세 정보",
+    page: "dashboard",
+    type: "table",
+    fetchContext: async () => {
+      const month = getCurrentYearMonth();
+      const res = await fetchTop5Bestsellers(month);
+      return mapTop5ToAILines(res);
+    },
   },
   ...categoryBestsellerData,
 ];
@@ -111,57 +168,137 @@ async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
   return data.answer as string;
 }
 
-async function buildContextPrefixText(selectedIds: string[]): Promise<string> {
-  if (selectedIds.length === 0) return "";
-
-  const lines: string[] = [];
-  lines.push("[선택한 데이터 컨텍스트]");
-  lines.push("아래 데이터를 참고해서 답변하세요.\n");
-
-  for (const id of selectedIds) {
-    const item = allAvailableData.find((d) => d.id === id);
-    if (!item) continue;
-
-    const value = await item.fetchContext();
-
-    lines.push(`■ ${item.title}`);
-    lines.push(
-      typeof value === "string" ? value : JSON.stringify(value, null, 2)
-    );
-    lines.push("");
+function normalizeContextToLines(value: any): string[] {
+  if (Array.isArray(value)) {
+    return value;
   }
 
-  return lines.join("\n");
+  if (typeof value === "string") {
+    return value.split("\n").filter(Boolean);
+  }
+
+  if (typeof value === "object" && value !== null) {
+    return Object.entries(value).map(([key, val]) => `${key}: ${val}`);
+  }
+
+  return [];
 }
 
-async function buildContextSystemMessage(
-  selectedIds: string[]
-): Promise<string | null> {
-  if (selectedIds.length === 0) return null;
+// AI 답변에서 * 제거
+function stripAsterisks(text: string) {
+  return text.replace(/\*/g, "");
+}
 
-  const lines: string[] = [];
-  lines.push("다음은 사용자가 선택한 데이터 컨텍스트입니다.");
-  lines.push("이 정보를 참고해서 질문에 답하세요.\n");
+// 연-월 포맷 함수
+function getCurrentYearMonth(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
 
-  for (const id of selectedIds) {
-    const item = allAvailableData.find((d) => d.id === id);
-    if (!item) continue;
+// title 정제 함수
+function normalizeAITitle(title: string): string {
+  return title
+    .replace(
+      /아마존\s+(전체|립 케어|스킨 케어|립 메이크업|페이스 파우더)\s+/,
+      "아마존 "
+    )
+    .trim();
+}
 
-    const value = await item.fetchContext();
-
-    lines.push(`■ ${item.title}`);
-    lines.push(
-      typeof value === "string" ? value : JSON.stringify(value, null, 2)
-    );
-    lines.push("");
+// title 정제 분기 함수
+function getAITitle(item: AISelectableData): string {
+  if (item.page === "ranking" && item.title.includes("순위 추이")) {
+    return "제품 순위 변동 추이";
   }
 
-  return lines.join("\n");
+  if (item.page === "ranking" && item.title.includes("베스트셀러 순위")) {
+    return normalizeAITitle(item.title);
+  }
+
+  // 그 외는 그대로
+  return item.title;
+}
+
+// 제품 순위 데이터 정제 함수
+function mapRankingTrendToAILines(params: {
+  productName: string;
+  range: string;
+  items?: any[];
+}): string[] {
+  const { productName, range, items } = params;
+
+  const lines: string[] = [];
+  lines.push(`product_name: ${productName}`);
+  lines.push(`range: ${range}`);
+
+  if (!Array.isArray(items) || items.length === 0) {
+    lines.push("⚠️ 순위 데이터가 없습니다");
+    return lines;
+  }
+
+  items.forEach((item) => {
+    const date = item.bucket ?? item.date ?? "unknown_date";
+
+    const hasOverall = item.rank1 != null;
+    const hasCategory = item.rank2 != null;
+
+    if (!hasOverall && !hasCategory) {
+      lines.push(`${date}: rank 없음`);
+      return;
+    }
+
+    const parts: string[] = [];
+
+    if (hasOverall) {
+      parts.push(`overall ${item.rank1} (${item.rank1_category})`);
+    }
+
+    if (hasCategory) {
+      parts.push(`category ${item.rank2} (${item.rank2_category})`);
+    }
+
+    lines.push(`${date}: ${parts.join(", ")}`);
+  });
+
+  return lines;
 }
 
 /* ================= Component ================= */
 
 export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
+  const pocketChartData: AISelectableData[] = cartItems
+    .filter((item) => item.type === "chart" && item.page === "ranking")
+    .map((item) => ({
+      id: item.uniqueKey,
+      title: item.title,
+      page: "ranking",
+      type: "chart",
+      fetchContext: async () => {
+        const meta = item.meta as any;
+
+        const productId = meta?.productId; // ✅ 여기서 정의
+        const range = meta?.range; // ✅ WEEK/MONTH/YEAR
+
+        if (!productId || !range) {
+          console.error("[AI chart meta missing]", { meta, item });
+          return [
+            `error: meta missing`,
+            `productId: ${String(productId)}`,
+            `range: ${String(range)}`,
+          ];
+        }
+
+        const res = await fetchProductRankTrends(productId, range);
+
+        const normalized = normalizeRankTrendApiToAI(res);
+        return mapRankingHistoryToAILines(normalized);
+      },
+    }));
+
+  const aiSelectableData = [...allAvailableData, ...pocketChartData];
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "init",
@@ -195,7 +332,7 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
 
     // 선택된 데이터: id -> title (UI 태그용)
     const attachedDataTitles = selectedData.map((id) => {
-      const item = allAvailableData.find((d) => d.id === id);
+      const item = aiSelectableData.find((d) => d.id === id);
       return item?.title || id;
     });
 
@@ -212,40 +349,52 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
     setIsTyping(true);
 
     try {
-      // ✅ 컨텍스트를 텍스트로 만들고, "user content" 앞에 붙임
-      const ctxPrefix = await buildContextPrefixText(selectedData);
+      // 백엔드가 허용하는 role만 사용: user / assistant
+      const historyForAPI: ChatMessageForAPI[] = messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
 
-      const userContentForAPI =
-        ctxPrefix.trim().length > 0
-          ? `${ctxPrefix}\n\n[질문]\n${userMessage.content}`
-          : userMessage.content;
+      const attachedDataForAPI: AttachedDataBlock[] = await Promise.all(
+        selectedData.map(async (id) => {
+          const item = aiSelectableData.find((d) => d.id === id);
+          if (!item) return null;
 
-      // ✅ 백엔드가 허용하는 role만 사용: user / assistant
-      const historyForAPI: ChatMessageForAPI[] = [
-        ...messages.map((m) => ({
-          role: m.role,
-          content: m.content,
-          attachedData: m.attachedData,
-        })),
-        {
-          role: "user",
-          content: userContentForAPI,
-          attachedData: userMessage.attachedData,
-        },
-      ];
+          const raw = await item.fetchContext();
+
+          return {
+            title: getAITitle(item),
+            lines: normalizeContextToLines(raw),
+          };
+        })
+      ).then((v) => v.filter(Boolean) as AttachedDataBlock[]);
+
+      const userMessageForAPI: ChatMessageForAPI = {
+        role: "user",
+        content: userMessage.content,
+        attachedData:
+          attachedDataForAPI.length > 0 ? attachedDataForAPI : undefined,
+      };
 
       // ===== DEBUG LOG =====
       console.group("AI Chat Payload Debug");
       console.log("messages:", historyForAPI);
-      console.log("selectedDataIds:", selectedData);
-      console.log("selectedDataTitles:", attachedDataTitles);
-      console.log("ctxPrefix:", ctxPrefix);
+      console.groupEnd();
+
+      console.group("AI Payload (Final)");
+      console.log(
+        JSON.stringify(
+          {
+            messages: [...historyForAPI, userMessageForAPI],
+          },
+          null,
+          2
+        )
+      );
       console.groupEnd();
 
       const reply = await callChatAPI({
-        messages: historyForAPI,
-        selectedDataIds: selectedData,
-        selectedDataTitles: attachedDataTitles,
+        messages: [...historyForAPI, userMessageForAPI],
       });
 
       const aiResponse: Message = {
@@ -282,11 +431,13 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   };
 
   const cartDataIds = cartItems.map((item) => item.uniqueKey);
-  const pocketData = allAvailableData.filter((d) => cartDataIds.includes(d.id));
-  const otherData = allAvailableData.filter((d) => !cartDataIds.includes(d.id));
+
+  const pocketData = aiSelectableData.filter((d) => cartDataIds.includes(d.id));
+
+  const otherData = aiSelectableData.filter((d) => !cartDataIds.includes(d.id));
 
   const selectedDataItems = selectedData
-    .map((id) => allAvailableData.find((d) => d.id === id))
+    .map((id) => aiSelectableData.find((d) => d.id === id))
     .filter(Boolean);
 
   /* ================= Render ================= */
@@ -320,7 +471,7 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
               )}
 
               <div className="ai-message__bubble">
-                {msg.content}
+                {stripAsterisks(msg.content)}
                 <time>
                   {msg.timestamp.toLocaleTimeString("ko-KR", {
                     hour: "2-digit",

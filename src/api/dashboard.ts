@@ -165,6 +165,43 @@ export async function fetchTop1BestSeller(month: string) {
   };
 }
 
+// Top5 AI 전달용 함수
+export function mapTop5ToAILines(
+  data: {
+    month: string;
+    snapshot_time: string;
+    items: BestSellerItemRaw[];
+  }
+): string[] {
+  const lines: string[] = [];
+
+  lines.push(`month: ${data.month}`);
+  lines.push(`snapshot_time: ${data.snapshot_time}`);
+
+  data.items.forEach((item) => {
+    const name = item.product_name
+      .split(/[-–:+|]/)[0]
+      .replace(/^laneige\s+/i, "")
+      .trim();
+
+    const rankChange =
+      item.rank_change > 0
+        ? `+${item.rank_change}`
+        : `${item.rank_change}`;
+
+    lines.push(
+      `rank ${item.rank}: ${name} | ` +
+        `sales ${item.last_month_sales} | ` +
+        `rating ${item.rating} | ` +
+        `reviews ${item.review_count} | ` +
+        `rank_change ${rankChange}`
+    );
+  });
+
+  return lines;
+}
+
+
 // [3] 매출 1위 제품 - AI 컨텍스트용 인터페이스
 export interface Top1BestSellerAIContext {
   month: string;

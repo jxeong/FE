@@ -16,6 +16,15 @@ export interface CurrentRankingResponse {
   items: RankingItemRaw[];
 }
 
+export const AMAZON_CATEGORY_ID_MAP: Record<AmazonCategory, number> = {
+  all_beauty: 1,
+  lip_care: 2,
+  skin_care: 3,
+  lip_makeup: 4,
+  face_powder: 5,
+};
+
+
 export async function fetchCurrentRanking(categoryId: number) {
   const res = await fetch(
     `${API_BASE_URL}/api/rankings/current?category=${categoryId}`
@@ -26,6 +35,36 @@ export async function fetchCurrentRanking(categoryId: number) {
   }
 
   return res.json() as Promise<CurrentRankingResponse>;
+}
+
+// AI 전달용: 현재 랭킹 → lines
+export function mapCurrentRankingToAILines(
+  categoryKey: string,
+  data: CurrentRankingResponse
+): string[] {
+  const lines: string[] = [];
+
+  lines.push(`category: ${categoryKey}`);
+  lines.push(`snapshot_time: ${data.snapshot_time}`);
+
+  data.items.forEach((item) => {
+    const name = item.product_name
+      .split(/[-–:+|]/)[0]
+      .trim();
+
+    const rankChange =
+      item.rank_change > 0
+        ? `+${item.rank_change}`
+        : `${item.rank_change}`;
+
+    lines.push(
+      `rank ${item.rank}: ${name} | ` +
+        `is_laneige ${item.is_laneige} | ` +
+        `rank_change ${rankChange}`
+    );
+  });
+
+  return lines;
 }
 
 // [2] 아마존 라네즈 제품 리스트 조회
@@ -158,3 +197,75 @@ export function mapRankTrendsToChartData(
     categoryCategory: item.rank2_category ?? undefined,
   }));
 }
+
+
+// AI 채팅 전달용 함수
+export function normalizeRankTrendApiToAI(data: {
+  product_name: string;
+  style?: string;
+  range: string;
+  items: {
+    bucket: string;
+    rank1?: number | null;
+    rank1_category?: string | null;
+    rank2?: number | null;
+    rank2_category?: string | null;
+  }[];
+}) {
+  return {
+    product_name: data.product_name,
+    style: data.style,
+    range: data.range,
+    items: data.items.map((item) => ({
+      date: item.bucket,
+      overallRank: item.rank1 ?? undefined,
+      overallCategory: item.rank1_category ?? undefined,
+      categoryRank: item.rank2 ?? undefined,
+      categoryCategory: item.rank2_category ?? undefined,
+    })),
+  };
+}
+
+export function mapRankingHistoryToAILines(data: {
+  product_name: string;
+  style?: string;
+  range: string;
+  items: {
+    date: string;
+    overallRank?: number;
+    overallCategory?: string;
+    categoryRank?: number;
+    categoryCategory?: string;
+  }[];
+}): string[] {
+  const lines: string[] = [];
+
+  lines.push(`product_name: ${data.product_name}`);
+
+  if (data.style) {
+    lines.push(`style: ${data.style}`);
+  }
+
+  lines.push(`range: ${data.range}`);
+
+  data.items.forEach((item) => {
+    const parts: string[] = [];
+
+    if (item.overallRank != null) {
+      parts.push(`overall ${item.overallRank} (${item.overallCategory})`);
+    }
+
+    if (item.categoryRank != null) {
+      parts.push(`category ${item.categoryRank} (${item.categoryCategory})`);
+    }
+
+    if (parts.length === 0) {
+      lines.push(`${item.date}: rank 없음`);
+    } else {
+      lines.push(`${item.date}: ${parts.join(", ")}`);
+    }
+  });
+
+  return lines;
+}
+
