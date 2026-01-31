@@ -1,0 +1,645 @@
+/* 전역 스타일 */
+.review-analysis {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 32px;
+}
+
+.review-analysis__main {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ========== 제품 선택 섹션 ========== */
+.product-selection {
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  padding: 1.8rem 3rem;
+  margin-bottom: 32px;
+}
+
+.product-selection__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.product-selection__title {
+  font-family: "Pretendard", sans-serif;
+  font-weight: 500;
+  font-size: 30px;
+  color: #383838;
+  margin: 0;
+}
+
+.product-selection__actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.product-selection__search {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 25px;
+  height: 25px;
+  color: #7a7a7a;
+}
+
+.product-selection__search-input {
+  width: 100%;
+  padding: 15px 20px 15px 55px;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  font-family: "Pretendard", sans-serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.product-selection__search-input::placeholder {
+  color: #7a7a7a;
+}
+
+.product-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  box-shadow: 0px 2px 5px 0px #88888833;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
+.product-carousel__items {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  flex: 1;
+  padding: 10px 0;
+}
+
+.product-carousel__items::-webkit-scrollbar {
+  display: none;
+}
+
+.product-card__badge {
+  position: absolute;
+  top: 17px;
+  left: 20px;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background: #38383880;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+
+.product-card__badge--active {
+  background: #6691ff;
+}
+
+/* 고객들이 말합니다 */
+.customer-feedback {
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  padding: 1.8rem 3rem;
+  margin-bottom: 32px;
+}
+
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.customer-feedback__title {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+.highlight {
+  font-size: 22px;
+  font-weight: 600;
+  color: #6691ff;
+}
+
+.count {
+  font-size: 16px;
+  color: #383838;
+  font-weight: 400;
+}
+
+.customer-feedback__rating {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.rating-label {
+  font-family: "Pretendard", sans-serif;
+  font-size: 16px;
+  color: #383838;
+}
+
+.rating-value {
+  font-family: "Pretendard", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #6691ff;
+}
+
+.rating-stars {
+  display: flex;
+  gap: 3px;
+}
+
+.star {
+  color: #6691ff;
+  font-size: 16px;
+}
+
+.star--filled {
+  color: #6691ff;
+}
+
+.star--half {
+  background: linear-gradient(90deg, #6691ff 50%, #d6e2ff 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.customer-feedback__quote {
+  font-size: 15px;
+  font-weight: 400;
+  color: #383838;
+  line-height: 1.6;
+  margin: 0;
+  font-style: normal;
+  background-color: #f6f6f6;
+  border-radius: 50px;
+  padding: 30px 30px;
+}
+
+/* ========== 감정 분석 섹션 ========== */
+.sentiment-analysis {
+  background-color: white;
+}
+
+.sentiment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.sentiment-card {
+  background: white;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  padding: 1.8rem 3rem;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.card-title {
+  font-weight: 500;
+  font-size: 30px;
+  color: #383838;
+}
+
+.btn-report-small {
+  background: #f5f5f5;
+  border: none;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-family: "Pretendard", sans-serif;
+  font-size: 13px;
+  color: #383838;
+  cursor: pointer;
+  margin-right: 10px;
+  transition: background 0.2s;
+}
+
+.btn-report-small:hover {
+  background: #e5e5e5;
+}
+
+.btn-expand {
+  background: white;
+  border: 1px solid #c4c4c4;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  color: #383838;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-expand:hover {
+  background: #f5f5f5;
+}
+
+.sentiment-chart {
+  position: relative;
+  width: 300px;
+  height: 300px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.donut-chart {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/* 플로팅 툴팁 스타일 */
+.chart-tooltip-simple {
+  position: absolute;
+  bottom: 42%;
+  background: rgba(255, 255, 255);
+  border: 0.65px solid #6691FF;
+  padding: 9px 20px;
+  border-radius: 32.42px;
+  box-shadow: 0px 0px 5px 0px #6691FF80;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+  animation: tooltipAppear 0.2s ease-out forwards;
+}
+
+@keyframes tooltipAppear {
+  from {
+    opacity: 0;
+    scale: 0.95;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+  }
+}
+
+.tooltip-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #383838;
+}
+
+.tooltip-value {
+  font-size: 22px;
+  font-weight: 600;
+  color: #6691FF;
+}
+
+/* 평점 지수 */
+.rating-chart {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.rating-score-circle {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  margin-bottom: 20px;
+}
+
+.score-circle {
+  width: 100%;
+  height: 100%;
+}
+
+.score-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.score-number {
+  font-size: 52px;
+  font-weight: 400;
+  color: #6691ff;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 13px;
+  color: #7a7a7a;
+  margin-top: 5px;
+}
+
+.rating-stars-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-bottom: 8px;
+}
+
+.rating-stars-display .star {
+  color: #6691ff;
+  font-size: 18px;
+}
+
+.rating-stars-display .star--filled {
+  color: #6691ff;
+}
+
+.rating-stars-display .star--half {
+  background: linear-gradient(90deg, #6691ff 50%, #d6e2ff 50%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.rating-number {
+  font-family: "Pretendard", sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #383838;
+  margin-left: 8px;
+}
+
+.review-count {
+  font-family: "Pretendard", sans-serif;
+  font-size: 14px;
+  color: #7a7a7a;
+}
+
+.rating-distribution {
+  background: white;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  padding: 40px 50px;
+  margin-bottom: 30px;
+}
+
+.rating-section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.section-title {
+  font-weight: 500;
+  font-size: 30px;
+  color: #383838;
+}
+
+.rating-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.rating-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.rating-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 50px;
+}
+
+.star-filled {
+  color: #6691ff;
+  font-size: 16px;
+}
+
+.star-number {
+  font-family: "Pretendard", sans-serif;
+  font-size: 16px;
+  color: #383838;
+}
+
+.rating-bar-container {
+  flex: 1;
+}
+
+.rating-bar-bg {
+  width: 100%;
+  height: 32px;
+  background: #f1f5ff;
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.rating-bar-fill {
+  height: 100%;
+  background: #6691ff;
+  border-radius: 50px;
+  transition: width 0.3s ease;
+}
+
+.rating-bar-percentage {
+  font-size: 16px;
+  color: #7a7a7a;
+  font-weight: 400;
+  width: 50px;
+  text-align: right;
+}
+
+/* ========== AI 인사이트 섹션 ========== */
+.review-ai-insights {
+  margin-bottom: 30px;
+}
+
+.ai-section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.ai-insights__container {
+  background: white;
+  border: 1px solid #c4c4c4;
+  border-radius: 50px;
+  padding: 40px 50px;
+}
+
+.ai-insights__title {
+  font-weight: 500;
+  font-size: 30px;
+  color: #383838;
+}
+
+.insights-list {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.insight-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insight-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.insight-icon {
+  width: 35px;
+  height: 35px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.insight-header-text {
+  flex: 1;
+}
+
+.insight-title {
+  font-family: "Pretendard", sans-serif;
+  font-weight: 600;
+  font-size: 22px;
+  color: #383838;
+}
+
+.insight-meta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.mention-count {
+  font-size: 16px;
+  font-weight: 500;
+  color: #7a7a7a;
+}
+
+.score {
+  font-size: 16px;
+  font-weight: 500;
+  color: #7a7a7a;
+}
+
+.score-value {
+  color: #6691ff;
+  font-weight: 500;
+}
+
+.insight-analysis {
+  background: linear-gradient(186.54deg, #ffffff -16.85%, #f1f5ff 105.01%);
+  border-radius: 50px;
+  padding: 25px 40px;
+  box-shadow: 0px 2px 5px 0px #8888881a;
+}
+
+.ai-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ai-badge span {
+  font-family: "Pretendard", sans-serif;
+  font-size: 16px;
+  color: #6691ff;
+  font-weight: 400;
+}
+
+.analysis-text {
+  font-size: 16px;
+  font-weight: 400;
+  color: #565656;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ========== 반응형 ========== */
+@media (max-width: 1024px) {
+  .sentiment-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .ai-insights__container {
+    padding: 30px 25px;
+  }
+
+  .ai-insights__title {
+    font-size: 24px;
+  }
+
+  .insight-title {
+    font-size: 18px;
+  }
+
+  .insight-analysis {
+    padding: 20px 25px;
+  }
+}
