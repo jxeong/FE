@@ -2,10 +2,10 @@
 
 ## ⌨️ FE Developer
 
-|                                                            Developer                                                             |
-| :------------------------------------------------------------------------------------------------------------------------------: |
-| <a href="https://github.com/jxeong"><img src="https://avatars.githubusercontent.com/u/134910678?v=4" width="120px;" alt=""/></a> |
-|                                                              김소정                                                              |
+|                                                            Developer                                                             |                                                            Developer                                                             |
+| :------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: |
+| <a href="https://github.com/jxeong"><img src="https://avatars.githubusercontent.com/u/134910678?v=4" width="120px;" alt=""/></a> | <a href="https://github.com/dolmaroyujinpark"><img src="https://avatars.githubusercontent.com/dolmaroyujinpark" width="120px;" alt=""/></a> |
+|                                                              김소정                                                              |                                                              박유진                                                              |
 
 ## 🛠 Language and Tools
 
