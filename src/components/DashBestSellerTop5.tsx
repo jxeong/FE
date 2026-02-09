@@ -1,6 +1,6 @@
 import { TableCard } from "./DashTableCard";
 import { Star } from "lucide-react";
-import type { BestSellerTop5Row } from "../types/dashboard";
+import type { BestSellerTop5Row } from "../api/dashboard";
 
 interface BestSellerTop5Props {
   data: BestSellerTop5Row[];

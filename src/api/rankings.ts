@@ -6,7 +6,7 @@ export interface RankingItemRaw {
   rank: number;
   product_name: string;
   is_laneige: boolean;
-  prev_rank: number;
+  prev_rank: number | null;
   rank_change: number;
 }
 
@@ -34,7 +34,8 @@ export async function fetchCurrentRanking(categoryId: number) {
     throw new Error("Failed to fetch current ranking");
   }
 
-  return res.json() as Promise<CurrentRankingResponse>;
+  const data = await res.json();
+  return data.result as CurrentRankingResponse;
 }
 
 // AI 전달용: 현재 랭킹 → lines
@@ -73,8 +74,8 @@ export interface LaneigeProductRaw {
   image_url: string;
   product_name: string;
   style: string;
-  rank_1: number;
-  rank_2: number;
+  rank_1: number | null;
+  rank_2: number | null;
   rank_1_category: string;
   rank_2_category: string;
 }
@@ -84,8 +85,8 @@ export interface LaneigeProductUI {
   name: string;
   style: string;
   imageUrl: string;
-  rank1: number;
-  rank2: number;
+  rank1: number | null;
+  rank2: number | null;
   rank1Category: string;
   rank2Category: string;
 }
@@ -105,11 +106,12 @@ export async function fetchCurrentProducts(): Promise<{
     throw new Error("Failed to fetch laneige products");
   }
 
-  const data = (await res.json()) as LaneigeProductsResponse;
+  const json = await res.json();
+  const data = json.result;
 
   return {
-    snapshot_time: data.snapshot_time,
-    items: data.items.map(mapLaneigeProductToUI),
+    snapshot_time: data?.snapshot_time,
+    items: (data?.items ?? []).map(mapLaneigeProductToUI),
   };
 }
 
@@ -175,7 +177,8 @@ export async function fetchProductRankTrends(
     throw new Error("Failed to fetch product rank trends");
   }
 
-  return res.json();
+  const data = await res.json();
+  return data.result as RankTrendApiResponse;
 }
 
 export interface RankChartPoint {

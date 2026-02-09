@@ -402,7 +402,7 @@ export function RankingHistory({
                       {item.product_name}
                     </div>
 
-                    <td className="prev-rank">{item.prev_rank}위</td>
+                    <td className="prev-rank">{item.prev_rank != null ? `${item.prev_rank}위` : '-'}</td>
 
                     <td className="rank-change">
                       {item.rank_change > 0 && (

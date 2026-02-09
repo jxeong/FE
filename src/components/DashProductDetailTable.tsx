@@ -1,6 +1,6 @@
 // components/DashProductDetailTable.tsx
 import { TableCard } from "./DashTableCard";
-import type { ProductDetailRow } from "../types/dashboard";
+import type { ProductDetailRow } from "../api/dashboard";
 
 function getChangeInfo(change: number) {
   if (change > 0) {
@@ -81,7 +81,7 @@ export function ProductDetailTable({
 
                   <td>{item.sales.toLocaleString()}</td>
 
-                  <td>{item.prevRank}위</td>
+                  <td>{item.prevRank != null ? `${item.prevRank}위` : '-'}</td>
 
                   <td className={changeInfo.className}>{changeInfo.text}</td>
                 </tr>

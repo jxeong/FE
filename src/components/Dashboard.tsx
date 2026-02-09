@@ -39,8 +39,8 @@ import {
 import type {
   BestSellerItemRaw,
   Top1BestSellerItemRaw,
-} from "../types/api/dashboard";
-import type { BestSellerTop5Row, ProductDetailRow } from "../types/dashboard";
+} from "../api/dashboard";
+import type { BestSellerTop5Row, ProductDetailRow } from "../api/dashboard";
 
 interface DashboardProps {
   addToCart: (item: Omit<InsightItem, "id" | "timestamp">) => void;
@@ -181,7 +181,7 @@ export function Dashboard({
         }
 
         const data = await res.json();
-        setTodayInsight(data.insight);
+        setTodayInsight(data.result.insight);
       } catch (e) {
         console.error("오늘의 인사이트 로드 실패", e);
         setTodayInsight("오늘의 인사이트를 불러오지 못했어요.");

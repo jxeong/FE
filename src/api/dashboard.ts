@@ -12,7 +12,7 @@ export interface BestSellerItemRaw {
   last_month_sales: number;
   rating: number;
   review_count: number;
-  prev_month_rank: number;
+  prev_month_rank: number | null;
   rank_change: number;
 }
 
@@ -41,7 +41,7 @@ interface NormalizedBestSeller {
   sales: number;
   rating: number;
   reviews: number;
-  prevRank: number;
+  prevRank: number | null;
   rankChange: number;
 }
 
@@ -92,7 +92,7 @@ export interface ProductDetailRow {
   rank: number;
   name: string;
   sales: number;
-  prevRank: number;
+  prevRank: number | null;
   rankChange: number;
 }
 
@@ -123,7 +123,8 @@ export async function fetchTop5Bestsellers(month: string) {
     throw new Error("Failed to fetch top5 bestsellers");
   }
 
-  return res.json() as Promise<BestSellerTop5ApiResponse>;
+  const data = await res.json();
+  return data.result as BestSellerTop5ApiResponse;
 }
 
 
@@ -154,7 +155,7 @@ export async function fetchTop1BestSeller(month: string) {
   }
 
   const data = await res.json();
-  const raw = data.item;
+  const raw = data.result.item;
 
   return {
     title: normalizeProductName(raw.product_name),
@@ -224,7 +225,7 @@ export async function fetchTop1BestSellerAIContext(month: string) {
   const data = await res.json();
 
   const raw =
-    data?.item ?? data?.items ?? data?.data?.item ?? data?.data?.items ?? null;
+    data?.result?.item ?? data?.item ?? data?.items ?? null;
 
   if (!raw) {
     console.error("[Top1 AI] raw is undefined", data);
@@ -232,7 +233,7 @@ export async function fetchTop1BestSellerAIContext(month: string) {
   }
 
   return {
-    month: data.month ?? data.data?.month,
+    month: data.result?.month ?? data.month,
     product_name: raw.product_name,
     rank: raw.rank,
     last_month_sales: raw.last_month_sales,
@@ -264,7 +265,7 @@ export async function fetchRisingProduct() {
   }
 
   const data = await res.json();
-  const raw = data.item;
+  const raw = data.result?.item;
 
   if (!raw) {
     console.warn("rising raw item is empty", data);
@@ -299,10 +300,10 @@ export async function fetchRisingProductItemAIContext(month: string) {
   const data = await res.json();
 
   const raw =
-    data?.item ?? data?.items ?? data?.data?.item ?? data?.data?.items ?? null;
+    data?.result?.item ?? data?.item ?? data?.items ?? null;
 
   if (!raw) {
-    console.error("[Top1 AI] raw is undefined", data);
+    console.error("[Rising AI] raw is undefined", data);
     return null;
   }
 

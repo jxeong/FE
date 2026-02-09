@@ -47,5 +47,6 @@ export async function fetchProductReviewAnalysis(productId: number): Promise<Rev
   if (!res.ok) {
     throw new Error("Failed to fetch review analysis");
   }
-  return res.json() as Promise<ReviewAnalysisResponse>;
+  const data = await res.json();
+  return data.result as ReviewAnalysisResponse;
 }
