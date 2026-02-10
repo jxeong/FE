@@ -146,6 +146,8 @@ export function ReviewAnalysis({
     loadReviewAnalysis();
   }, [selectedProduct]);
 
+  const selectedProductName = products.find(p => p.productId === selectedProduct)?.name ?? "";
+
   return (
     <div className="review-analysis">
       <main className="review-analysis__main">
@@ -153,21 +155,6 @@ export function ReviewAnalysis({
         <section className="product-selection">
           <div className="product-selection__header">
             <h2 className="product-selection__title">분석할 제품 선택</h2>
-            <div className="product-selection__actions">
-              <AddToCartButton
-                onAdd={() =>
-                  addToCart({
-                    type: "product-selection",
-                    title: "분석할 제품 선택",
-                    data: products,
-                    page: "review",
-                    uniqueKey: "review-product-selection",
-                  })
-                }
-                onRemove={() => removeByUniqueKey("review-product-selection")}
-                isInCart={isInCart("review-product-selection")}
-              />
-            </div>
           </div>
 
           <div className="product-selection__search">
@@ -230,19 +217,22 @@ export function ReviewAnalysis({
               <span className="highlight">고객들이 말합니다</span>
               <span className="count">{reviewAnalysis ? `전체 ${reviewAnalysis.reputation.review_count.toLocaleString()}개 리뷰 분석` : "전체 -개 리뷰"}</span>
             </h3>
-            <AddToCartButton
-              onAdd={() =>
-                  addToCart({
-                    type: "feedback-summary",
-                    title: "고객들이 말합니다 (리뷰 요약)",
-                    data: reviewAnalysis ? { count: reviewAnalysis.reputation.review_count, rating: reviewAnalysis.reputation.rating } : null,
-                    page: "review",
-                    uniqueKey: "review-customer-feedback",
-                  })
-              }
-              onRemove={() => removeByUniqueKey("review-customer-feedback")}
-              isInCart={isInCart("review-customer-feedback")}
-            />
+            {selectedProduct && (
+              <AddToCartButton
+                onAdd={() =>
+                    addToCart({
+                      type: "stat",
+                      title: `${selectedProductName} 고객 리뷰 요약`,
+                      data: reviewAnalysis ? { count: reviewAnalysis.reputation.review_count, rating: reviewAnalysis.reputation.rating } : null,
+                      page: "review-analysis",
+                      uniqueKey: `review-customer-feedback-${selectedProduct}`,
+                      meta: { productId: selectedProduct },
+                    })
+                }
+                onRemove={() => removeByUniqueKey(`review-customer-feedback-${selectedProduct}`)}
+                isInCart={isInCart(`review-customer-feedback-${selectedProduct}`)}
+              />
+            )}
           </div>
           <div className="customer-feedback__rating">
             <span className="rating-label">긍정 반응</span>
@@ -267,21 +257,24 @@ export function ReviewAnalysis({
               <div className="card-header">
                 <h3 className="card-title">감정 분석 분포</h3>
                 <div className="card-header__actions">
-                  <AddToCartButton
-                    onAdd={() =>
-                      addToCart({
-                        type: "chart",
-                        title: "감정 분석 분포",
-                        data: reviewAnalysis ? reviewAnalysis.sentiment : null,
-                        page: "review",
-                        uniqueKey: "review-sentiment-distribution",
-                      })
-                    }
-                    onRemove={() =>
-                      removeByUniqueKey("review-sentiment-distribution")
-                    }
-                    isInCart={isInCart("review-sentiment-distribution")}
-                  />
+                  {selectedProduct && (
+                    <AddToCartButton
+                      onAdd={() =>
+                        addToCart({
+                          type: "chart",
+                          title: `${selectedProductName} 감정 분석 분포`,
+                          data: reviewAnalysis ? reviewAnalysis.sentiment : null,
+                          page: "review-analysis",
+                          uniqueKey: `review-sentiment-distribution-${selectedProduct}`,
+                          meta: { productId: selectedProduct },
+                        })
+                      }
+                      onRemove={() =>
+                        removeByUniqueKey(`review-sentiment-distribution-${selectedProduct}`)
+                      }
+                      isInCart={isInCart(`review-sentiment-distribution-${selectedProduct}`)}
+                    />
+                  )}
                 </div>
               </div>
               <div className="sentiment-chart">
@@ -356,19 +349,22 @@ export function ReviewAnalysis({
               <div className="card-header">
                 <h3 className="card-title">평점 지수</h3>
                 <div className="card-header__actions">
-                  <AddToCartButton
-                    onAdd={() =>
-                      addToCart({
-                        type: "stat",
-                        title: "평점 지수",
-                        data: reviewAnalysis ? { score: reviewAnalysis.reputation.score, rating: reviewAnalysis.reputation.rating } : null,
-                        page: "review",
-                        uniqueKey: "review-rating-index",
-                      })
-                    }
-                    onRemove={() => removeByUniqueKey("review-rating-index")}
-                    isInCart={isInCart("review-rating-index")}
-                  />
+                  {selectedProduct && (
+                    <AddToCartButton
+                      onAdd={() =>
+                        addToCart({
+                          type: "stat",
+                          title: `${selectedProductName} 평점 지수`,
+                          data: reviewAnalysis ? { score: reviewAnalysis.reputation.score, rating: reviewAnalysis.reputation.rating } : null,
+                          page: "review-analysis",
+                          uniqueKey: `review-rating-index-${selectedProduct}`,
+                          meta: { productId: selectedProduct },
+                        })
+                      }
+                      onRemove={() => removeByUniqueKey(`review-rating-index-${selectedProduct}`)}
+                      isInCart={isInCart(`review-rating-index-${selectedProduct}`)}
+                    />
+                  )}
                 </div>
               </div>
               <div className="rating-chart">
@@ -416,19 +412,22 @@ export function ReviewAnalysis({
           <div className="rating-distribution">
             <div className="rating-section-header-row">
               <h3 className="section-title">평점 분포</h3>
-              <AddToCartButton
-                onAdd={() =>
-                  addToCart({
-                    type: "chart",
-                    title: "평점 분포",
-                    data: reviewAnalysis ? reviewAnalysis.rating_distribution : null,
-                    page: "review",
-                    uniqueKey: "review-rating-distribution",
-                  })
-                }
-                onRemove={() => removeByUniqueKey("review-rating-distribution")}
-                isInCart={isInCart("review-rating-distribution")}
-              />
+              {selectedProduct && (
+                <AddToCartButton
+                  onAdd={() =>
+                    addToCart({
+                      type: "chart",
+                      title: `${selectedProductName} 평점 분포`,
+                      data: reviewAnalysis ? reviewAnalysis.rating_distribution : null,
+                      page: "review-analysis",
+                      uniqueKey: `review-rating-distribution-${selectedProduct}`,
+                      meta: { productId: selectedProduct },
+                    })
+                  }
+                  onRemove={() => removeByUniqueKey(`review-rating-distribution-${selectedProduct}`)}
+                  isInCart={isInCart(`review-rating-distribution-${selectedProduct}`)}
+                />
+              )}
             </div>
             <div className="rating-bars">
               {ratingDistribution.map((item) => (
@@ -461,19 +460,22 @@ export function ReviewAnalysis({
               <h2 className="ai-insights__title">
                 AI 키워드 분석 및 비즈니스 인사이트
               </h2>
-              <AddToCartButton
-                onAdd={() =>
-                  addToCart({
-                    type: "insight-list",
-                    title: "AI 키워드 분석 및 비즈니스 인사이트",
-                    data: reviewAnalysis ? reviewAnalysis.keyword_insights : null,
-                    page: "review",
-                    uniqueKey: "review-ai-insights",
-                  })
-                }
-                onRemove={() => removeByUniqueKey("review-ai-insights")}
-                isInCart={isInCart("review-ai-insights")}
-              />
+              {selectedProduct && (
+                <AddToCartButton
+                  onAdd={() =>
+                    addToCart({
+                      type: "insight",
+                      title: `${selectedProductName} AI 키워드 인사이트`,
+                      data: reviewAnalysis ? reviewAnalysis.keyword_insights : null,
+                      page: "review-analysis",
+                      uniqueKey: `review-ai-insights-${selectedProduct}`,
+                      meta: { productId: selectedProduct },
+                    })
+                  }
+                  onRemove={() => removeByUniqueKey(`review-ai-insights-${selectedProduct}`)}
+                  isInCart={isInCart(`review-ai-insights-${selectedProduct}`)}
+                />
+              )}
             </div>
 
             <div className="insights-list">

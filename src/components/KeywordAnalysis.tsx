@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import '../styles/KeywordAnalysis.css';
+import { AddToCartButton } from './AddToCartButton';
+import type { InsightItem } from '../App';
 
 interface KeywordData {
   rank: number;
@@ -11,7 +13,13 @@ interface KeywordData {
   category: string;
 }
 
-export function KeywordAnalysis() {
+interface KeywordAnalysisProps {
+  addToCart: (item: Omit<InsightItem, 'id' | 'timestamp'>) => void;
+  removeByUniqueKey: (uniqueKey: string) => void;
+  isInCart: (uniqueKey: string) => boolean;
+}
+
+export function KeywordAnalysis({ addToCart, removeByUniqueKey, isInCart }: KeywordAnalysisProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('전체 카테고리');
   const [sortBy, setSortBy] = useState('전체 카테고리');
@@ -62,7 +70,20 @@ export function KeywordAnalysis() {
       <main className="keyword-analysis__main">
         {/* 카테고리별 키워드 분포 차트 */}
         <section className="chart-section">
-          <h2 className="chart-title">카테고리별 키워드 분포</h2>
+          <div className="chart-section__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h2 className="chart-title">카테고리별 키워드 분포</h2>
+            <AddToCartButton
+              onAdd={() => addToCart({
+                type: 'chart',
+                title: '카테고리별 키워드 분포',
+                data: categoryData,
+                page: 'keywords',
+                uniqueKey: 'keyword-category-distribution',
+              })}
+              onRemove={() => removeByUniqueKey('keyword-category-distribution')}
+              isInCart={isInCart('keyword-category-distribution')}
+            />
+          </div>
           <div className="bar-chart">
             <div className="chart-bars">
               {/* 가로선과 수치 */}
@@ -94,8 +115,19 @@ export function KeywordAnalysis() {
 
         {/* 키워드 테이블 섹션 */}
         <section className="keyword-section">
-          <div className="keyword-header">
+          <div className="keyword-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2 className="keyword-title">키워드 순위</h2>
+            <AddToCartButton
+              onAdd={() => addToCart({
+                type: 'table',
+                title: '키워드 순위',
+                data: allKeywords,
+                page: 'keywords',
+                uniqueKey: 'keyword-rankings-table',
+              })}
+              onRemove={() => removeByUniqueKey('keyword-rankings-table')}
+              isInCart={isInCart('keyword-rankings-table')}
+            />
           </div>
 
           <div className="keyword-filters">

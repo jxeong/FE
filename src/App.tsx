@@ -17,6 +17,7 @@ export interface InsightItem {
   page: PageType;
   timestamp: Date;
   uniqueKey: string;
+  meta?: Record<string, any>;
 }
 
 export default function App() {

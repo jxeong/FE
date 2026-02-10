@@ -17,6 +17,8 @@ import {
   normalizeRankTrendApiToAI,
   AMAZON_CATEGORY_ID_MAP,
 } from "../api/rankings";
+import { fetchProductReviewAnalysis } from "../api/reviews";
+import type { RatingDistItem, KeywordInsight } from "../api/reviews";
 
 /* ================= Types ================= */
 
@@ -50,7 +52,7 @@ type AISelectableData = {
   id: string;
   title: string;
   page: string;
-  type: "stat" | "chart" | "table";
+  type: "stat" | "chart" | "table" | "insight";
   fetchContext: () => Promise<any>;
 };
 
@@ -166,6 +168,40 @@ const allAvailableData: AISelectableData[] = [
     },
   },
   ...categoryBestsellerData,
+  {
+    id: "dashboard-chart-monthly-sales",
+    title: "월별 판매 추이 차트",
+    page: "dashboard",
+    type: "chart",
+    fetchContext: async () =>
+      "[더미데이터] 월별 판매 추이: 1월 1,200개 / 2월 1,450개 / 3월 1,800개 / 4월 2,100개",
+  },
+  {
+    id: "keyword-category-distribution",
+    title: "카테고리별 키워드 분포",
+    page: "keywords",
+    type: "chart",
+    fetchContext: async () => [
+      "Product Benefit: 11,621건",
+      "Product Type: 18,763건",
+      "Product Feature: 12,463건",
+      "Result: 9,174건",
+      "Skin Concern: 6,699건",
+    ],
+  },
+  {
+    id: "keyword-rankings-table",
+    title: "키워드 순위",
+    page: "keywords",
+    type: "table",
+    fetchContext: async () => [
+      "1위 hydration (8,956건, +12.3%)",
+      "2위 sleeping mask (7,234건, +8.7%)",
+      "3위 moisturizing (6,542건, +0.2%)",
+      "4위 soft skin (5,876건, +15.4%)",
+      "5위 overnight (5,234건, +6.8%)",
+    ],
+  },
 ];
 
 /* ================= Helpers ================= */
@@ -347,7 +383,60 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
       },
     }));
 
-  const aiSelectableData = [...allAvailableData, ...pocketChartData];
+  const pocketReviewData: AISelectableData[] = cartItems
+    .filter((item) => item.page === "review-analysis")
+    .map((item) => ({
+      id: item.uniqueKey,
+      title: item.title,
+      page: "review-analysis",
+      type: item.type as AISelectableData["type"],
+      fetchContext: async () => {
+        const meta = item.meta as any;
+        const productId = meta?.productId;
+
+        if (!productId) {
+          return [`error: productId missing in meta for ${item.uniqueKey}`];
+        }
+
+        const res = await fetchProductReviewAnalysis(productId);
+        const key = item.uniqueKey;
+
+        if (key.startsWith("review-customer-feedback-")) {
+          return [
+            `총 리뷰 수: ${res.reputation.review_count.toLocaleString()}개`,
+            `평균 평점: ${res.reputation.rating.toFixed(1)}`,
+            `고객 피드백: "${res.customers_say.current_text}"`,
+          ];
+        }
+        if (key.startsWith("review-sentiment-distribution-")) {
+          return [
+            `긍정 반응: ${res.sentiment.positive_pct}%`,
+            `부정 반응: ${res.sentiment.negative_pct}%`,
+          ];
+        }
+        if (key.startsWith("review-rating-index-")) {
+          return [
+            `신뢰도 점수: ${res.reputation.score}`,
+            `평균 평점: ${res.reputation.rating.toFixed(1)}`,
+            `총 리뷰: ${res.reputation.review_count.toLocaleString()}개`,
+          ];
+        }
+        if (key.startsWith("review-rating-distribution-")) {
+          return res.rating_distribution.map(
+            (r: RatingDistItem) => `${r.star}점: ${r.pct}%`
+          );
+        }
+        if (key.startsWith("review-ai-insights-")) {
+          return res.keyword_insights.map(
+            (k: KeywordInsight) =>
+              `${k.aspect_name} (언급 ${k.mention_total}건, 점수 ${k.score}/100): ${k.summary}`
+          );
+        }
+        return [`리뷰 분석 데이터: ${item.title}`];
+      },
+    }));
+
+  const aiSelectableData = [...allAvailableData, ...pocketChartData, ...pocketReviewData];
 
   const [messages, setMessages] = useState<Message[]>([
     {
