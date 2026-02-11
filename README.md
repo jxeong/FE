@@ -2,16 +2,16 @@
 
 ## ⌨️ FE Developer
 
-|                                                            Developer                                                             |                                                            Developer                                                             |
-| :------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: |
-| <a href="https://github.com/jxeong"><img src="https://avatars.githubusercontent.com/u/134910678?v=4" width="120px;" alt=""/></a> | <a href="https://github.com/dolmaroyujinpark"><img src="https://avatars.githubusercontent.com/dolmaroyujinpark" width="120px;" alt=""/></a> |
-|                                                              김소정                                                              |                                                              박유진                                                              |
+|                                                            Developer                                                             |                                                            Developer                                                             |                                                            Developer                                                             |
+| :------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------: |
+| <a href="https://github.com/jxeong"><img src="https://avatars.githubusercontent.com/u/134910678?v=4" width="120px;" alt=""/></a> | <a href="https://github.com/dolmaroyujinpark"><img src="https://avatars.githubusercontent.com/dolmaroyujinpark" width="120px;" alt=""/></a> | <a href="https://github.com/HeejuKo"><img src="https://avatars.githubusercontent.com/HeejuKo" width="120px;" alt=""/></a>
+|                                                              김소정                                                              |                                                              박유진                                                              |                                                              고희주                                                              |
 
 ## 🛠 Language and Tools
 
 | **역할**             | **종류**                                                                                                                                                                                                                                                                                                                        | **선정 이유**                                                                 |
 | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Library              | <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=white">                                                                                                                                                                                                                            |  |
+| Library              | <img src="https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=React&logoColor=white">                                                                                                                                                                                                                            | 컴포넌트 기반 UI 개발을 통해 개발 시간 및 비용 절약 가능
 | Programming Language | <img src="https://img.shields.io/badge/TypeScript-4477C0?style=for-the-badge&logo=TypeScript&logoColor=white"/>                                                                                                                                                                                                                 | 쉬운 디버깅 및 유연한 코드 작성 가능                                          |
 | Styling              | <img src="https://img.shields.io/badge/styledcomponents-DB7093?style=for-the-badge&logo=styledcomponents&logoColor=white">                                                                                                                                                                                                      | CSS-in-JS 방식의 컴포넌트 기반 스타일링 방식으로 관리가 간편                  |
 | Data Fetching        | <img src="https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=Axios&logoColor=white">                                                                                                                                                                                                                            | json 에디터 자동 변환 기능으로 사용 편의                                      |
@@ -26,13 +26,17 @@
 ```
 FE
  ├─ 📂 src
+ │   └─ 📂 api
  │   └─ 📂 assets
  │   └─ 📂 components (.tsx)
+ │   └─ 📂 config
  │   └─ 📂 styles (.css)
+ │   └─ 📂 utils
  │   └─ 📜 App.tsx
  │   └─ 📜 index.css
  │   └─ 📜 main.tsx
  ├─ 📜 .gitignore
+ ├─ 📜 favicon.ico
  └─ 📂 .github
      └─ 📂 workflows
          └─ 📜 deploy.yml
