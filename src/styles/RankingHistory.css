@@ -209,6 +209,15 @@
   overflow-y: hidden;
   width: 95%;
   display: block;
+
+    /* 스크롤바 숨김 */
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge/IE */
+  -webkit-overflow-scrolling: touch;
+}
+
+.ranking-product-name::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .ranking-product-name.is-laneige {
