@@ -4,6 +4,10 @@ import { motion, AnimatePresence } from "motion/react";
 import type { InsightItem } from "../App";
 import * as XLSX from "xlsx";
 
+import { PAGE_LABEL_MAP, ITEM_TYPE_LABEL_MAP } from "../utils/label";
+import { formatExcelTimestamp } from "../utils/date";
+import { buildExcelSheetData } from "../utils/excel/buildExcelSheet";
+
 import { InsightCartItem } from "./InsightCartItem";
 import { InsightCartLoading } from "./InsightCartLoading";
 
@@ -73,14 +77,14 @@ export function InsightCart({
 
       /* ===== Summary ===== */
       const summaryData = [
-        ["LANEIGE Amazon Analytics Report"],
+        ["LANEIGE Amazon 데이터 분석 자료"],
         ["Generated:", new Date().toLocaleString("ko-KR")],
-        ["Total Items:", selectedItems.length],
+        ["Total Cards:", selectedItems.length],
         [""],
-        ["Page", "Item Type", "Title", "Added Time"],
+        ["Page", "Card Type", "Title", "Added Time"],
         ...selectedItems.map((item) => [
-          item.page,
-          item.type,
+          PAGE_LABEL_MAP[item.page] ?? item.page,
+          ITEM_TYPE_LABEL_MAP[item.type] ?? item.type,
           item.title,
           item.timestamp.toLocaleString("ko-KR"),
         ]),
@@ -93,38 +97,22 @@ export function InsightCart({
       );
 
       /* ===== Item Sheets ===== */
-      selectedItems.forEach((item, idx) => {
-        let data: any[][] = [];
+      for (let idx = 0; idx < selectedItems.length; idx++) {
+        const item = selectedItems[idx];
 
-        if (item.type === "stat") {
-          data = [
-            [item.title],
-            ["Value", item.data.value],
-            ["Change", item.data.change],
-            ["Trend", item.data.trend],
-          ];
-        } else if (item.type === "chart") {
-          data = [
-            [item.title],
-            [],
-            Object.keys(item.data[0]),
-            ...item.data.map(Object.values),
-          ];
-        } else if (item.type === "table") {
-          data = [[item.title], [], ...item.data];
-        } else if (item.type === "insight") {
-          data = [[item.title], [], [item.data]];
-        }
+        // 카드별로 현재 데이터를 다시 조회해서 시트 데이터 만들기
+        const data: any[][] = await buildExcelSheetData(item);
 
         XLSX.utils.book_append_sheet(
           wb,
           XLSX.utils.aoa_to_sheet(data),
-          `Item_${idx + 1}`
+          `Card_${idx + 1}`
         );
-      });
+      }
 
       /* ===== 파일 저장 ===== */
-      XLSX.writeFile(wb, `LANEIGE_Insights_${Date.now()}.xlsx`);
+      const timestamp = formatExcelTimestamp();
+      XLSX.writeFile(wb, `LANEIGE_Insights_${timestamp}.xlsx`);
 
       clearTimeout(timeoutId);
 
@@ -182,7 +170,7 @@ export function InsightCart({
                   </button>
                 </div>
                 <p className="ic-header__desc">
-                  {items.length}개의 인사이트가 담겨 있습니다
+                  {items.length}개의 인사이트가 담겨 있습니다.
                 </p>
               </header>
 
@@ -215,7 +203,7 @@ export function InsightCart({
               {/* ===== Item List ===== */}
               <section className="ic-list">
                 {items.length === 0 ? (
-                  <div className="ic-empty">담긴 인사이트가 없습니다</div>
+                  <div className="ic-empty">담긴 인사이트가 없습니다.</div>
                 ) : (
                   items.map((item) => (
                     <InsightCartItem
@@ -238,7 +226,7 @@ export function InsightCart({
                     onClick={generateExcel}
                   >
                     <img src={docsIcon} alt="" className="ic-btn__icon" />
-                    엑셀 자동 저장 ({selectedItems.length}개)
+                    엑셀 파일 다운로드 ({selectedItems.length})
                   </button>
 
                   <button
@@ -272,7 +260,7 @@ export function InsightCart({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
             >
-              <h3>앗! 보고서가 만들어지지 않았어요</h3>
+              <h3>앗! 엑셀 파일이 만들어지지 않았어요</h3>
               <p>다시 시도해 주세요.</p>
 
               <button

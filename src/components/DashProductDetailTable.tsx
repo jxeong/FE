@@ -26,6 +26,7 @@ function getChangeInfo(change: number) {
 interface ProductDetailTableProps {
   data: ProductDetailRow[];
   loading: boolean;
+  month: string;
   addToCart: any;
   removeByUniqueKey: any;
   isInCart: any;
@@ -34,6 +35,7 @@ interface ProductDetailTableProps {
 export function ProductDetailTable({
   data,
   loading,
+  month,
   addToCart,
   removeByUniqueKey,
   isInCart,

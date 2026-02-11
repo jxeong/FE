@@ -250,6 +250,7 @@
   font-weight: 400;
   padding: 0px 10px;
   border-radius: 50px;
+  border: 1px solid #6691ff;
   background: #6691ff;
   color: #fff;
 }

@@ -49,16 +49,16 @@ interface DashboardProps {
 }
 
 const salesData = [
-  { date: "12/22", sales: 3800 },
-  { date: "12/23", sales: 4200 },
-  { date: "12/24", sales: 3900 },
-  { date: "12/25", sales: 5100 },
-  { date: "12/26", sales: 4600 },
-  { date: "12/27", sales: 5800 },
-  { date: "12/28", sales: 6200 },
-  { date: "12/29", sales: 5900 },
-  { date: "12/30", sales: 6500 },
-  { date: "12/31", sales: 8500 },
+  { date: "12/22", sales: 38000 },
+  { date: "12/23", sales: 42000 },
+  { date: "12/24", sales: 39000 },
+  { date: "12/25", sales: 51000 },
+  { date: "12/26", sales: 46000 },
+  { date: "12/27", sales: 58000 },
+  { date: "12/28", sales: 62000 },
+  { date: "12/29", sales: 59000 },
+  { date: "12/30", sales: 65000 },
+  { date: "12/31", sales: 85000 },
 ];
 
 function CustomTooltip({ activePoint }: any) {
@@ -221,6 +221,7 @@ export function Dashboard({
           icon={Package}
           trend="up"
           uniqueKey="dashboard-stat-sales"
+          month={month}
           addToCart={addToCart}
           removeByUniqueKey={removeByUniqueKey}
           isInCart={isInCart}
@@ -232,6 +233,7 @@ export function Dashboard({
           icon={DollarSign}
           trend="up"
           uniqueKey="dashboard-stat-revenue"
+          month={month}
           addToCart={addToCart}
           removeByUniqueKey={removeByUniqueKey}
           isInCart={isInCart}
@@ -240,6 +242,7 @@ export function Dashboard({
         {top1Product && (
           <StatCard
             variant="product"
+            month={month}
             label="지난 달 매출 1위"
             title={top1Product.title}
             imageUrl={top1Product.imageUrl}
@@ -256,6 +259,7 @@ export function Dashboard({
         {risingProduct && (
           <StatCard
             variant="product"
+            month={month}
             label="급상승한 제품"
             title={risingProduct.title}
             imageUrl={risingProduct.imageUrl}
@@ -284,6 +288,10 @@ export function Dashboard({
                   data: salesData,
                   page: "dashboard",
                   uniqueKey: "dashboard-chart-monthly-sales",
+                  meta: {
+                    kind: "dashboard-chart-monthly-sales",
+                    month,
+                  },
                 })
               }
               onRemove={() =>
@@ -376,6 +384,7 @@ export function Dashboard({
       <BestSellerTop5
         data={top5Rows}
         loading={loading}
+        month={month}
         addToCart={addToCart}
         removeByUniqueKey={removeByUniqueKey}
         isInCart={isInCart}
@@ -384,6 +393,7 @@ export function Dashboard({
       <ProductDetailTable
         data={detailRows}
         loading={loading}
+        month={month}
         addToCart={addToCart}
         removeByUniqueKey={removeByUniqueKey}
         isInCart={isInCart}
@@ -402,6 +412,7 @@ interface StatCardProps {
   addToCart: DashboardProps["addToCart"];
   removeByUniqueKey: DashboardProps["removeByUniqueKey"];
   isInCart: DashboardProps["isInCart"];
+  month?: string;
 
   /* KPI 카드*/
   value?: string;
@@ -428,6 +439,7 @@ function StatCard({
   addToCart,
   removeByUniqueKey,
   isInCart,
+  month,
   imageUrl,
   rating,
   reviewCount,
@@ -464,6 +476,9 @@ function StatCard({
                   data: { value, change, trend },
                   page: "dashboard",
                   uniqueKey,
+                  meta: {
+                    kind: uniqueKey, month,
+                  }
                 })
               }
               onRemove={() => removeByUniqueKey(uniqueKey)}
@@ -517,10 +532,13 @@ function StatCard({
           onAdd={() =>
             addToCart({
               type: "stat",
-              title,
-              data: { rating, reviewCount, growth },
+              title: label ?? title,
+              data: { rating, reviewCount, growth, productName: title,},
               page: "dashboard",
               uniqueKey,
+              meta: {
+                kind: uniqueKey, month,
+              }
             })
           }
           onRemove={() => removeByUniqueKey(uniqueKey)}

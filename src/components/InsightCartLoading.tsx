@@ -22,7 +22,7 @@ export function InsightCartLoading({ visible }: { visible: boolean }) {
             <Sparkles className="ic-loading__icon" />
           </motion.div>
 
-          <p className="ic-loading__text">보고서 생성 중…</p>
+          <p className="ic-loading__text">엑셀 파일로 내보내기 중…</p>
         </motion.div>
       )}
     </AnimatePresence>

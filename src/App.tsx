@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { RankingHistory } from './components/RankingHistory';
@@ -6,8 +6,25 @@ import { ReviewAnalysis } from './components/ReviewAnalysis';
 import { AIInsights } from './components/AIInsights';
 import { KeywordAnalysis } from './components/KeywordAnalysis';
 import { InsightCart } from './components/InsightCart';
+import type { CategoryCode } from "./components/RankingHistory";
+import type { RankRange } from "./components/RankingHistory";
+
+const CART_STORAGE_KEY = "insight-pocket-cart-v1";
 
 export type PageType = 'dashboard' | 'ranking' | 'review-analysis' | 'ai-insights' | 'keywords';
+
+export interface InsightMeta {
+  kind: string;
+  month?: string;
+
+  productId?: number;
+  range?: RankRange;
+  period?: "weekly" | "monthly" | "yearly";
+  productName?: string;
+
+  categoryCode?: CategoryCode;
+  categoryId?: number;
+}
 
 export interface InsightItem {
   id: string;
@@ -17,12 +34,35 @@ export interface InsightItem {
   page: PageType;
   timestamp: Date;
   uniqueKey: string;
-  meta?: Record<string, any>;
+  meta?: InsightMeta;
 }
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
-  const [cartItems, setCartItems] = useState<InsightItem[]>([]);
+  const [cartItems, setCartItems] = useState<InsightItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(CART_STORAGE_KEY);
+      if (!raw) return [];
+
+      const parsed = JSON.parse(raw) as any[];
+
+      return parsed.map((item) => ({
+        ...item,
+        timestamp: new Date(item.timestamp),
+      })) as InsightItem[];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    } catch {
+      // 용량/프라이빗 모드 등 예외 무시
+    }
+  }, [cartItems]);
+
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addToCart = (item: Omit<InsightItem, 'id' | 'timestamp'>) => {

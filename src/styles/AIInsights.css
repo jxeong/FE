@@ -320,12 +320,21 @@
   gap: 6px;
 }
 
-.ai-tag {
+.ai-tag-page {
   font-size: 12px;
   padding: 3px 10px;
   border-radius: 999px;
   border: 1px solid #8BABFF;
   background: #F1F5FF;
+  color: #6691FF;
+}
+
+.ai-tag-type {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #8BABFF;
+  background: #ffffff;
   color: #6691FF;
 }
 

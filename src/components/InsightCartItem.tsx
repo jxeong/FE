@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import type { InsightItem } from "../App";
+import { PAGE_LABEL_MAP, ITEM_TYPE_LABEL_MAP } from "../utils/label";
 
 interface Props {
   item: InsightItem;
@@ -18,8 +19,12 @@ export function InsightCartItem({ item, onRemove, checked, onToggle }: Props) {
       <div className="ic-item__content">
         <div className="ic-item__header">
           <div className="ic-item__meta">
-            <span className="ic-item__page">{item.page}</span>
-            <span className="ic-item__type">{item.type}</span>
+            <span className="ic-item__page">
+              {PAGE_LABEL_MAP[item.page] ?? item.page}
+            </span>
+            <span className="ic-item__type">
+              {ITEM_TYPE_LABEL_MAP[item.type] ?? item.type}
+            </span>
           </div>
 
           <button

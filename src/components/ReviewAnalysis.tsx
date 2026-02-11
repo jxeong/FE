@@ -223,10 +223,16 @@ export function ReviewAnalysis({
                     addToCart({
                       type: "stat",
                       title: `${selectedProductName} 고객 리뷰 요약`,
-                      data: reviewAnalysis ? { count: reviewAnalysis.reputation.review_count, rating: reviewAnalysis.reputation.rating } : null,
-                      page: "review-analysis",
+                      data: reviewAnalysis ? { 
+                        positive_pct: reviewAnalysis.sentiment.positive_pct,
+                        customers_say: reviewAnalysis.customers_say.current_text, 
+                      } : null,
+                      page: "review",
                       uniqueKey: `review-customer-feedback-${selectedProduct}`,
-                      meta: { productId: selectedProduct },
+                      meta: {
+                        kind: "review-customer-feedback",
+                        productId: selectedProduct
+                      }
                     })
                 }
                 onRemove={() => removeByUniqueKey(`review-customer-feedback-${selectedProduct}`)}
@@ -264,9 +270,12 @@ export function ReviewAnalysis({
                           type: "chart",
                           title: `${selectedProductName} 감정 분석 분포`,
                           data: reviewAnalysis ? reviewAnalysis.sentiment : null,
-                          page: "review-analysis",
+                          page: "review",
                           uniqueKey: `review-sentiment-distribution-${selectedProduct}`,
-                          meta: { productId: selectedProduct },
+                          meta: {
+                            kind: "review-sentiment-distribution",
+                            productId: selectedProduct
+                          }
                         })
                       }
                       onRemove={() =>
@@ -355,10 +364,17 @@ export function ReviewAnalysis({
                         addToCart({
                           type: "stat",
                           title: `${selectedProductName} 평점 지수`,
-                          data: reviewAnalysis ? { score: reviewAnalysis.reputation.score, rating: reviewAnalysis.reputation.rating } : null,
-                          page: "review-analysis",
+                          data: reviewAnalysis ? {
+                              score: reviewAnalysis.reputation.score,
+                              rating: reviewAnalysis.reputation.rating,
+                              review_count: reviewAnalysis.reputation.review_count,
+                          } : null,
+                          page: "review",
                           uniqueKey: `review-rating-index-${selectedProduct}`,
-                          meta: { productId: selectedProduct },
+                          meta: {
+                            kind: "review-rating-index",
+                            productId: selectedProduct
+                          }
                         })
                       }
                       onRemove={() => removeByUniqueKey(`review-rating-index-${selectedProduct}`)}
@@ -419,9 +435,12 @@ export function ReviewAnalysis({
                       type: "chart",
                       title: `${selectedProductName} 평점 분포`,
                       data: reviewAnalysis ? reviewAnalysis.rating_distribution : null,
-                      page: "review-analysis",
+                      page: "review",
                       uniqueKey: `review-rating-distribution-${selectedProduct}`,
-                      meta: { productId: selectedProduct },
+                      meta: {
+                        kind: "review-rating-distribution",
+                        productId: selectedProduct
+                      }
                     })
                   }
                   onRemove={() => removeByUniqueKey(`review-rating-distribution-${selectedProduct}`)}
@@ -467,9 +486,12 @@ export function ReviewAnalysis({
                       type: "insight",
                       title: `${selectedProductName} AI 키워드 인사이트`,
                       data: reviewAnalysis ? reviewAnalysis.keyword_insights : null,
-                      page: "review-analysis",
+                      page: "review",
                       uniqueKey: `review-ai-insights-${selectedProduct}`,
-                      meta: { productId: selectedProduct },
+                      meta: {
+                        kind: "review-ai-insights",
+                        productId: selectedProduct
+                      }
                     })
                   }
                   onRemove={() => removeByUniqueKey(`review-ai-insights-${selectedProduct}`)}

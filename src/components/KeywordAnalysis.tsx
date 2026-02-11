@@ -79,6 +79,7 @@ export function KeywordAnalysis({ addToCart, removeByUniqueKey, isInCart }: Keyw
                 data: categoryData,
                 page: 'keywords',
                 uniqueKey: 'keyword-category-distribution',
+                meta: { kind: 'keyword-category-distribution' },
               })}
               onRemove={() => removeByUniqueKey('keyword-category-distribution')}
               isInCart={isInCart('keyword-category-distribution')}
@@ -124,6 +125,7 @@ export function KeywordAnalysis({ addToCart, removeByUniqueKey, isInCart }: Keyw
                 data: allKeywords,
                 page: 'keywords',
                 uniqueKey: 'keyword-rankings-table',
+                meta: { kind: 'keyword-rankings-table' },
               })}
               onRemove={() => removeByUniqueKey('keyword-rankings-table')}
               isInCart={isInCart('keyword-rankings-table')}
@@ -159,7 +161,7 @@ export function KeywordAnalysis({ addToCart, removeByUniqueKey, isInCart }: Keyw
           <div className="review-table-header">
             <span className="col-rank">순위</span>
             <span className="col-keyword">키워드</span>
-            <span className="col-mentions">언급수</span>
+            <span className="col-mentions">언급 수</span>
             <span className="col-trend">트렌드</span>
             <span className="col-change">변화율</span>
             <span className="col-sentiment">감정</span>

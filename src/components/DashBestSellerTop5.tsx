@@ -5,6 +5,7 @@ import type { BestSellerTop5Row } from "../api/dashboard";
 interface BestSellerTop5Props {
   data: BestSellerTop5Row[];
   loading: boolean;
+  month: string;
   addToCart: any;
   removeByUniqueKey: any;
   isInCart: any;
@@ -13,6 +14,7 @@ interface BestSellerTop5Props {
 export function BestSellerTop5({
   data,
   loading,
+  month,
   addToCart,
   removeByUniqueKey,
   isInCart,
@@ -27,6 +29,10 @@ export function BestSellerTop5({
         data, // ← BestSellerTop5에 내려온 data 그대로
         page: "dashboard",
         uniqueKey: "dashboard-table-top5",
+        meta: {
+          kind: "dashboard-table-top5",
+          month,
+        },
       }}
       addToCart={addToCart}
       removeByUniqueKey={removeByUniqueKey}
