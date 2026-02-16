@@ -6,6 +6,9 @@ import { ReviewAnalysis } from './components/ReviewAnalysis';
 import { AIInsights } from './components/AIInsights';
 import { KeywordAnalysis } from './components/KeywordAnalysis';
 import { InsightCart } from './components/InsightCart';
+import { FloatingChatButton } from './components/FloatingChatButton';
+import { MiniChatWindow } from './components/MiniChatWindow';
+import { AnimatePresence } from 'motion/react';
 import type { CategoryCode } from "./components/RankingHistory";
 import type { RankRange } from "./components/RankingHistory";
 
@@ -64,6 +67,7 @@ export default function App() {
   }, [cartItems]);
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMiniChatOpen, setIsMiniChatOpen] = useState(false);
 
   const addToCart = (item: Omit<InsightItem, 'id' | 'timestamp'>) => {
     const newItem: InsightItem = {
@@ -92,6 +96,14 @@ export default function App() {
 
   // Hide cart on AI Insights page
   const showCart = currentPage !== 'ai-insights';
+
+  // Show floating chat button on all pages except AI Insights
+  const showFloatingChat = currentPage !== 'ai-insights';
+
+  const handleNavigateToAI = () => {
+    setIsMiniChatOpen(false);
+    setCurrentPage('ai-insights');
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -135,6 +147,21 @@ export default function App() {
           onRemove={removeFromCart}
           onClear={clearCart}
         />
+      )}
+
+      {showFloatingChat && !isCartOpen && (
+        <>
+          <FloatingChatButton onClick={() => setIsMiniChatOpen(!isMiniChatOpen)} />
+          <AnimatePresence>
+            {isMiniChatOpen && (
+              <MiniChatWindow
+                cartItems={cartItems}
+                onClose={() => setIsMiniChatOpen(false)}
+                onNavigateToAI={handleNavigateToAI}
+              />
+            )}
+          </AnimatePresence>
+        </>
       )}
     </div>
   );
