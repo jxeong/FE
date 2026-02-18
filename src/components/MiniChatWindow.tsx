@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Send, Bot, Plus, FileText, Maximize2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import "../styles/MiniChatWindow.css";
@@ -20,27 +21,21 @@ import {
 } from "../api/rankings";
 import { fetchProductReviewAnalysis } from "../api/reviews";
 import type { RatingDistItem, KeywordInsight } from "../api/reviews";
+import type {
+  AttachedDataBlock,
+  ChatMessage,
+  ChatMessageForAPI,
+  ChatPayload,
+} from "../types/chat";
 
 /* ================= Types ================= */
-type ChatPayload = {
-  messages: ChatMessageForAPI[];
-};
-
 type GenerateReportResponse = {
   report_id: string;
   body_md: string;
   title?: string;
 };
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  attachedData?: string[];
-  canGenerateReport?: boolean;
-  reportPayload?: ChatPayload;
-}
+type Message = ChatMessage;
 
 type AISelectableData = {
   id: string;
@@ -48,17 +43,6 @@ type AISelectableData = {
   page: string;
   type: "stat" | "chart" | "table" | "insight";
   fetchContext: () => Promise<any>;
-};
-
-type AttachedDataBlock = {
-  title: string;
-  lines: string[];
-};
-
-type ChatMessageForAPI = {
-  role: "user" | "assistant";
-  content: string;
-  attachedData?: AttachedDataBlock[];
 };
 
 /* ================= Static Data ================= */
@@ -286,12 +270,16 @@ function getAITitle(item: AISelectableData): string {
 /* ================= Component ================= */
 interface MiniChatWindowProps {
   cartItems: InsightItem[];
+  chatMessages: ChatMessage[];
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
   onClose: () => void;
   onNavigateToAI: () => void;
 }
 
 export function MiniChatWindow({
   cartItems,
+  chatMessages,
+  setChatMessages,
   onClose,
   onNavigateToAI,
 }: MiniChatWindowProps) {
@@ -381,16 +369,6 @@ export function MiniChatWindow({
     ...pocketReviewData,
   ];
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "init",
-      role: "assistant",
-      content:
-        "안녕하세요! LANEIGE 데이터 분석 AI 어시스턴트입니다, 질문해 주세요!",
-      timestamp: new Date(),
-    },
-  ]);
-
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
@@ -402,13 +380,13 @@ export function MiniChatWindow({
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    const last = messages[messages.length - 1];
+    const last = chatMessages[chatMessages.length - 1];
     if (!last) return;
     messageRefs.current[last.id]?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
-  }, [messages]);
+  }, [chatMessages]);
 
   const handleGenerateReport = async (msg: Message) => {
     if (!msg.reportPayload) return;
@@ -427,7 +405,7 @@ export function MiniChatWindow({
       });
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           id: `${Date.now()}-report-error`,
@@ -457,12 +435,12 @@ export function MiniChatWindow({
       attachedData: selectedData.length > 0 ? attachedDataTitles : undefined,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setChatMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
 
     try {
-      const historyForAPI: ChatMessageForAPI[] = messages.map((m) => ({
+      const historyForAPI: ChatMessageForAPI[] = chatMessages.map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -508,10 +486,10 @@ export function MiniChatWindow({
         reportPayload: canGenerate ? finalPayload : undefined,
       };
 
-      setMessages((prev) => [...prev, aiResponse]);
+      setChatMessages((prev) => [...prev, aiResponse]);
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 2).toString(),
@@ -573,7 +551,7 @@ export function MiniChatWindow({
 
       {/* Chat */}
       <main className="mini-chat-content">
-        {messages.map((msg) => (
+        {chatMessages.map((msg) => (
           <div
             key={msg.id}
             ref={(el) => (messageRefs.current[msg.id] = el)}

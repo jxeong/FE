@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { Send, Bot, Plus, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import "../styles/AIInsights.css";
@@ -20,14 +21,16 @@ import {
 } from "../api/rankings";
 import { fetchProductReviewAnalysis } from "../api/reviews";
 import type { RatingDistItem, KeywordInsight } from "../api/reviews";
+import type {
+  ChatMessage,
+  ChatMessageForAPI,
+  ChatPayload,
+  AttachedDataBlock,
+} from "../types/chat";
 
 /* ================= Types ================= */
 
 // 도라 - 리포트 생성용 payload 저장 구조
-
-type ChatPayload = {
-  messages: ChatMessageForAPI[];
-};
 
 type GenerateReportResponse = {
   report_id: string;
@@ -35,19 +38,7 @@ type GenerateReportResponse = {
   title?: string;
 };
 
-interface Message {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-  timestamp: Date;
-  attachedData?: string[];
-  //도라
-  // 이 답변 밑에 '리포트 생성' 버튼을 띄울지
-  canGenerateReport?: boolean;
-
-  // 버튼 눌렀을 때 다시 보낼 payload
-  reportPayload?: ChatPayload;
-}
+type Message = ChatMessage;
 
 type AISelectableData = {
   id: string;
@@ -55,17 +46,6 @@ type AISelectableData = {
   page: string;
   type: "stat" | "chart" | "table" | "insight";
   fetchContext: () => Promise<any>;
-};
-
-type AttachedDataBlock = {
-  title: string;
-  lines: string[];
-};
-
-type ChatMessageForAPI = {
-  role: "user" | "assistant";
-  content: string;
-  attachedData?: AttachedDataBlock[];
 };
 
 /* ================= Static Data ================= */
@@ -354,7 +334,17 @@ function mapRankingTrendToAILines(params: {
 }
 
 /* ================= Component ================= */
-export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
+interface AIInsightsProps {
+  cartItems: InsightItem[];
+  chatMessages: ChatMessage[];
+  setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>;
+}
+
+export function AIInsights({
+  cartItems,
+  chatMessages,
+  setChatMessages,
+}: AIInsightsProps) {
   const pocketChartData: AISelectableData[] = cartItems
     .filter((item) => item.type === "chart" && item.page === "ranking")
     .map((item) => ({
@@ -439,16 +429,6 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
 
   const aiSelectableData = [...allAvailableData, ...pocketChartData, ...pocketReviewData];
 
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "init",
-      role: "assistant",
-      content:
-        "안녕하세요! LANEIGE 데이터 분석 AI 어시스턴트입니다. \n왼쪽 + 버튼을 클릭하여 분석할 데이터를 선택하거나, 바로 질문해 주세요.",
-      timestamp: new Date(),
-    },
-  ]);
-
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
@@ -461,13 +441,13 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    const last = messages[messages.length - 1];
+    const last = chatMessages[chatMessages.length - 1];
     if (!last) return;
     messageRefs.current[last.id]?.scrollIntoView({
       behavior: "smooth",
       block: "nearest",
     });
-  }, [messages]);
+  }, [chatMessages]);
 
   /* ================= Send ================= */
   // 도라 - 버튼 클릭 핸들러 추가
@@ -492,7 +472,7 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
       // 에러는 채팅에 띄우거나, 토스트로 띄우거나 선택
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           id: `${Date.now()}-report-error`,
@@ -523,13 +503,13 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
       attachedData: selectedData.length > 0 ? attachedDataTitles : undefined,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setChatMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
 
     try {
       // 백엔드가 허용하는 role만 사용: user / assistant
-      const historyForAPI: ChatMessageForAPI[] = messages.map((m) => ({
+      const historyForAPI: ChatMessageForAPI[] = chatMessages.map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -594,10 +574,10 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
         reportPayload: canGenerate ? finalPayload : undefined,
       };
 
-      setMessages((prev) => [...prev, aiResponse]);
+      setChatMessages((prev) => [...prev, aiResponse]);
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
-      setMessages((prev) => [
+      setChatMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 2).toString(),
@@ -636,7 +616,7 @@ export function AIInsights({ cartItems }: { cartItems: InsightItem[] }) {
     <div className="ai-insights">
       {/* ===== Chat ===== */}
       <main className="ai-chat">
-        {messages.map((msg) => (
+        {chatMessages.map((msg) => (
           <div
             key={msg.id}
             ref={(el) => (messageRefs.current[msg.id] = el)}
