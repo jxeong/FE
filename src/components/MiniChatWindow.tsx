@@ -189,7 +189,7 @@ function downloadMarkdown(params: { filename: string; content: string }) {
 async function callGenerateReportAPI(
   payload: ChatPayload
 ): Promise<GenerateReportResponse> {
-  const res = await fetch("https://boradora.store/api/report/custom", {
+  const res = await fetch("https://ai.boradora.store/api/report/custom", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
@@ -204,7 +204,7 @@ async function callGenerateReportAPI(
 }
 
 async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
-  const res = await fetch("https://boradora.store/api/chat", {
+  const res = await fetch("https://ai.boradora.store/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
