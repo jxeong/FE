@@ -59,6 +59,6 @@
       },
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "NODE_ENV=production vite build"
       }
 }
