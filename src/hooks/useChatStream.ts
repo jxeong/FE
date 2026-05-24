@@ -3,6 +3,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { ChatMessage, ChatMessageForAPI } from "../types/chat";
 
 const STREAM_URL = "https://ai.boradora.store/api/chat/stream";
+const THROTTLE_MS = 50;
 
 export function useChatStream(
   setChatMessages: Dispatch<SetStateAction<ChatMessage[]>>,
@@ -20,6 +21,27 @@ export function useChatStream(
     const msgId = (Date.now() + 1).toString();
     let accumulated = "";
     let firstChunk = true;
+    let lastRenderTime = 0;
+
+    const render = (text: string) => {
+      if (firstChunk) {
+        firstChunk = false;
+        setIsTyping(false);
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            id: msgId,
+            role: "assistant",
+            content: text,
+            timestamp: new Date(),
+          },
+        ]);
+      } else {
+        setChatMessages((prev) =>
+          prev.map((m) => (m.id === msgId ? { ...m, content: text } : m))
+        );
+      }
+    };
 
     const res = await fetch(STREAM_URL, {
       method: "POST",
@@ -54,24 +76,10 @@ export function useChatStream(
 
           accumulated += parsed.token;
 
-          if (firstChunk) {
-            firstChunk = false;
-            setIsTyping(false);
-            setChatMessages((prev) => [
-              ...prev,
-              {
-                id: msgId,
-                role: "assistant",
-                content: accumulated,
-                timestamp: new Date(),
-              },
-            ]);
-          } else {
-            setChatMessages((prev) =>
-              prev.map((m) =>
-                m.id === msgId ? { ...m, content: accumulated } : m
-              )
-            );
+          const now = Date.now();
+          if (now - lastRenderTime >= THROTTLE_MS) {
+            lastRenderTime = now;
+            render(accumulated);
           }
         } catch (e: any) {
           if (e.name === "SyntaxError") continue;
@@ -79,6 +87,9 @@ export function useChatStream(
         }
       }
     }
+
+    // 마지막 남은 토큰 flush
+    if (accumulated) render(accumulated);
 
     return { msgId, content: accumulated };
   };
