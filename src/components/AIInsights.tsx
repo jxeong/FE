@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useChatStream } from "../hooks/useChatStream";
 import type { Dispatch, SetStateAction } from "react";
 import { Send, Bot, Plus, FileText } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -202,7 +203,6 @@ function downloadMarkdown(params: { filename: string; content: string }) {
 
   URL.revokeObjectURL(url);
 }
-// 도라 api 함수 추가
 async function callGenerateReportAPI(
   payload: ChatPayload
 ): Promise<GenerateReportResponse> {
@@ -220,21 +220,6 @@ async function callGenerateReportAPI(
   return (await res.json()) as GenerateReportResponse;
 }
 
-async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
-  const res = await fetch("https://ai.boradora.store/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || "Chat API Error");
-  }
-
-  const data = await res.json();
-  return data.answer as string;
-}
 
 function normalizeContextToLines(value: any): string[] {
   if (Array.isArray(value)) {
@@ -433,10 +418,10 @@ export function AIInsights({
   const [isTyping, setIsTyping] = useState(false);
   const [selectedData, setSelectedData] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
-  //도라 추가
   const [generatingReportFor, setGeneratingReportFor] = useState<string | null>(
     null
   );
+  const { streamChat } = useChatStream(setChatMessages, setIsTyping);
 
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
@@ -556,25 +541,22 @@ export function AIInsights({
         messages: [...historyForAPI, userMessageForAPI],
       };
 
-      const reply = await callChatAPI(finalPayload);
-
       const canGenerate = (attachedDataForAPI?.length ?? 0) > 0;
 
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: reply,
-        timestamp: new Date(),
-        attachedData: attachedDataTitles.length
-          ? attachedDataTitles
-          : undefined,
-        // 버튼 표시 여부
-        canGenerateReport: canGenerate,
-        // 버튼 눌렀을 때 재사용할 payload
-        reportPayload: canGenerate ? finalPayload : undefined,
-      };
+      const { msgId } = await streamChat(finalPayload);
 
-      setChatMessages((prev) => [...prev, aiResponse]);
+      setChatMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? {
+                ...m,
+                attachedData: attachedDataTitles.length ? attachedDataTitles : undefined,
+                canGenerateReport: canGenerate,
+                reportPayload: canGenerate ? finalPayload : undefined,
+              }
+            : m
+        )
+      );
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
       setChatMessages((prev) => [

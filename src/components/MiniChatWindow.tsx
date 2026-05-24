@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useChatStream } from "../hooks/useChatStream";
 import type { Dispatch, SetStateAction } from "react";
 import { Send, Bot, Plus, FileText, Maximize2, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
@@ -203,21 +204,6 @@ async function callGenerateReportAPI(
   return (await res.json()) as GenerateReportResponse;
 }
 
-async function callChatAPI(payload: { messages: ChatMessageForAPI[] }) {
-  const res = await fetch("https://ai.boradora.store/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(text || "Chat API Error");
-  }
-
-  const data = await res.json();
-  return data.answer as string;
-}
 
 function normalizeContextToLines(value: any): string[] {
   if (Array.isArray(value)) {
@@ -378,6 +364,7 @@ export function MiniChatWindow({
   );
 
   const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const { streamChat } = useChatStream(setChatMessages, setIsTyping);
 
   useEffect(() => {
     const last = chatMessages[chatMessages.length - 1];
@@ -470,23 +457,22 @@ export function MiniChatWindow({
         messages: [...historyForAPI, userMessageForAPI],
       };
 
-      const reply = await callChatAPI(finalPayload);
-
       const canGenerate = (attachedDataForAPI?.length ?? 0) > 0;
 
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: reply,
-        timestamp: new Date(),
-        attachedData: attachedDataTitles.length
-          ? attachedDataTitles
-          : undefined,
-        canGenerateReport: canGenerate,
-        reportPayload: canGenerate ? finalPayload : undefined,
-      };
+      const { msgId } = await streamChat(finalPayload);
 
-      setChatMessages((prev) => [...prev, aiResponse]);
+      setChatMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId
+            ? {
+                ...m,
+                attachedData: attachedDataTitles.length ? attachedDataTitles : undefined,
+                canGenerateReport: canGenerate,
+                reportPayload: canGenerate ? finalPayload : undefined,
+              }
+            : m
+        )
+      );
     } catch (e: any) {
       const errMsg = e?.message ?? "Unknown error";
       setChatMessages((prev) => [
